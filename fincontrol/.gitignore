@@ -1,43 +1,36 @@
-# ─── Segredos e ambiente ───────────────────────────────────
 .env
 .env.local
 .env.production
 .env.*.local
 
-# Mantenha apenas o exemplo — nunca o arquivo real
-# .env.example  ← este PODE ser commitado (sem segredos reais)
-
-# ─── Dependências ──────────────────────────────────────────
 node_modules/
 .npm/
 
-# ─── Prisma: binários gerados (pesados e específicos de SO) ─
 backend/node_modules/.prisma/client/query_engine-*
 backend/node_modules/.prisma/client/*.dll.node
 backend/node_modules/.cache/prisma/
 
-# ─── Build e cache ─────────────────────────────────────────
 dist/
 build/
 .cache/
 *.tsbuildinfo
 
-# ─── Logs ──────────────────────────────────────────────────
+
 *.log
 logs/
 npm-debug.log*
 
-# ─── Sistema operacional ───────────────────────────────────
+
 .DS_Store
 Thumbs.db
 desktop.ini
 
-# ─── IDEs ──────────────────────────────────────────────────
+
 .vscode/
 .idea/
 *.swp
 *.swo
 
-# ─── Testes ────────────────────────────────────────────────
+
 coverage/
 .nyc_output/

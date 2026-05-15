@@ -403,7 +403,7 @@
       <label>Senha</label>
       <input type="password" id="login-pass" placeholder="••••••••" autocomplete="current-password">
     </div>
-    <button class="btn-primary" onclick="doLogin()">Entrar no sistema</button>
+    <button class="btn-primary" id="btn-login" onclick="doLogin()">Entrar no sistema</button>
     <div class="auth-hint">Demo: <strong>admin@fincontrol.com</strong> / <strong>Admin@1234</strong></div>
   </div>
 </div>
@@ -522,8 +522,8 @@
             <div style="font-size:13px;color:var(--text3)">Preencha todos os campos obrigatórios</div>
           </div>
           <div class="type-toggle">
-           <button class="type-btn active-income" id="btn-income" onclick="setType('INCOME')">↑ Receita</button>
-           <button class="type-btn" id="btn-expense" onclick="setType('EXPENSE')">↓ Despesa</button>
+            <button class="type-btn active-income" id="btn-income" onclick="setType('INCOME')">↑ Receita</button>
+            <button class="type-btn" id="btn-expense" onclick="setType('EXPENSE')">↓ Despesa</button>
           </div>
           <div class="form-grid">
             <div class="form-field" id="f-desc">
@@ -584,7 +584,8 @@
           </div>
           <div class="report-controls">
             <input type="month" id="rel-mes" onchange="renderRelatorio()">
-            <button class="btn-sm btn-outline" onclick="renderRelatorio()">Gerar Relatório</button>
+            <button class="btn-sm btn-outline" onclick="renderRelatorio()">Visualizar</button>
+            <button class="btn-sm btn-green" onclick="openPdfModal('monthly')">⬇ Exportar PDF</button>
           </div>
           <div id="rel-content"></div>
         </div>
@@ -599,12 +600,71 @@
           <div class="report-controls">
             <label style="font-size:13px;color:var(--text2)">Semana de:</label>
             <input type="date" id="rel-semana-inicio" onchange="renderSemanal()">
-            <button class="btn-sm btn-outline" onclick="renderSemanal()">Gerar Relatório</button>
+            <button class="btn-sm btn-outline" onclick="renderSemanal()">Visualizar</button>
+            <button class="btn-sm btn-green" onclick="openPdfModal('weekly')">⬇ Exportar PDF</button>
           </div>
           <div id="sem-content"></div>
         </div>
       </div>
 
+    </div>
+  </div>
+</div>
+
+<!-- MODAL PDF -->
+<div class="modal-overlay" id="pdf-modal">
+  <div class="modal" style="max-width:520px">
+    <div class="modal-header">
+      <div class="modal-title">Exportar Relatório em PDF</div>
+      <button class="close-btn" onclick="closePdfModal()">✕</button>
+    </div>
+
+    <!-- Logo -->
+    <div style="margin-bottom:1.25rem">
+      <label style="display:block;font-size:13px;font-weight:500;color:var(--text2);margin-bottom:6px">Logo da Empresa</label>
+      <div id="pdf-logo-preview" style="display:none;margin-bottom:8px">
+        <img id="pdf-logo-img" style="max-height:80px;max-width:200px;border-radius:8px;border:1px solid var(--border);padding:6px" />
+        <button onclick="removeLogo()" style="display:block;margin-top:6px;background:none;border:none;color:var(--danger);font-size:12px;cursor:pointer">✕ Remover imagem</button>
+      </div>
+      <label style="display:flex;align-items:center;gap:8px;padding:10px 14px;border:1.5px dashed var(--border);border-radius:var(--radius);cursor:pointer;font-size:13px;color:var(--text3);transition:border-color .15s" id="pdf-logo-label">
+        <span style="font-size:20px">🖼</span> Clique para adicionar logo (PNG, JPG)
+        <input type="file" id="pdf-logo-input" accept="image/*" style="display:none" onchange="previewLogo(this)">
+      </label>
+    </div>
+
+    <!-- Empresa e responsável -->
+    <div class="form-grid" style="margin-bottom:1rem">
+      <div class="form-field">
+        <label>Nome da Empresa *</label>
+        <input type="text" id="pdf-empresa" placeholder="Ex: Minha Empresa Ltda">
+      </div>
+      <div class="form-field">
+        <label>Responsável pelo Relatório *</label>
+        <input type="text" id="pdf-responsavel" placeholder="Ex: João Silva">
+      </div>
+    </div>
+
+    <!-- Período -->
+    <div style="margin-bottom:1.25rem">
+      <label style="display:block;font-size:13px;font-weight:500;color:var(--text2);margin-bottom:6px">Período dos Registros *</label>
+      <div style="display:flex;gap:10px;align-items:center">
+        <input type="date" id="pdf-inicio" style="flex:1;padding:10px 14px;border:1.5px solid var(--border);border-radius:var(--radius);font-family:var(--font);font-size:14px;background:var(--surface);color:var(--text);outline:none">
+        <span style="color:var(--text3);font-size:13px">até</span>
+        <input type="date" id="pdf-fim" style="flex:1;padding:10px 14px;border:1.5px solid var(--border);border-radius:var(--radius);font-family:var(--font);font-size:14px;background:var(--surface);color:var(--text);outline:none">
+      </div>
+    </div>
+
+    <!-- Observações -->
+    <div class="form-field" style="margin-bottom:1.5rem">
+      <label>Observações (opcional)</label>
+      <textarea id="pdf-obs" rows="2" placeholder="Ex: Relatório referente ao fechamento do mês de maio." style="width:100%;padding:10px 14px;border:1.5px solid var(--border);border-radius:var(--radius);font-family:var(--font);font-size:14px;background:var(--surface);color:var(--text);outline:none;resize:vertical"></textarea>
+    </div>
+
+    <div id="pdf-modal-error" style="display:none;color:var(--danger);font-size:13px;background:var(--danger-light);border-radius:8px;padding:10px 12px;margin-bottom:1rem"></div>
+
+    <div style="display:flex;gap:10px;justify-content:flex-end">
+      <button class="btn-sm btn-outline" onclick="closePdfModal()">Cancelar</button>
+      <button class="btn-sm btn-green" id="btn-gerar-pdf" onclick="gerarPDF()">⬇ Gerar PDF</button>
     </div>
   </div>
 </div>
@@ -693,8 +753,10 @@ async function doLogin() {
     s('login-pass').value = '';
   }
 }
-s('login-pass').addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
-s('login-user').addEventListener('keydown', e => { if (e.key === 'Enter') s('login-pass').focus(); });
+s('pdf-modal').addEventListener('click', e => { if(e.target === s('pdf-modal')) closePdfModal(); });
+s('edit-modal').addEventListener('click',e=>{if(e.target===s('edit-modal'))closeModal();});
+if(s('login-pass')) s('login-pass').addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
+if(s('login-user')) s('login-user').addEventListener('keydown', e => { if (e.key === 'Enter') s('login-pass').focus(); });
 
 function doLogout() {
   token = ''; localStorage.removeItem('fc_token');
@@ -866,6 +928,235 @@ async function renderSemanal() {
   } catch(e){ s('sem-content').innerHTML=`<div class="empty-state"><strong>Erro</strong><p>${e.message}</p></div>`; }
 }
 
+// ── PDF ──
+let pdfTipo = 'monthly';
+let logoBase64 = null;
+
+function openPdfModal(tipo) {
+  pdfTipo = tipo;
+  s('pdf-modal-error').style.display = 'none';
+  s('pdf-empresa').value = '';
+  s('pdf-responsavel').value = '';
+  s('pdf-obs').value = '';
+  // pré-preenche as datas com o período selecionado na tela
+  const hoje = new Date();
+  if (tipo === 'monthly') {
+    const mes = s('rel-mes').value;
+    if (mes) {
+      const [y, m] = mes.split('-');
+      s('pdf-inicio').value = `${y}-${m}-01`;
+      const ultimo = new Date(y, m, 0).getDate();
+      s('pdf-fim').value = `${y}-${m}-${String(ultimo).padStart(2,'0')}`;
+    }
+  } else {
+    const ini = s('rel-semana-inicio').value;
+    if (ini) {
+      s('pdf-inicio').value = ini;
+      const fim = new Date(ini);
+      fim.setDate(fim.getDate() + 6);
+      s('pdf-fim').value = fmtDate(fim);
+    }
+  }
+  s('pdf-modal').classList.add('open');
+}
+
+function closePdfModal() {
+  s('pdf-modal').classList.remove('open');
+}
+
+function previewLogo(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    logoBase64 = e.target.result;
+    s('pdf-logo-img').src = logoBase64;
+    s('pdf-logo-preview').style.display = 'block';
+    s('pdf-logo-label').style.display = 'none';
+  };
+  reader.readAsDataURL(file);
+}
+
+function removeLogo() {
+  logoBase64 = null;
+  s('pdf-logo-input').value = '';
+  s('pdf-logo-preview').style.display = 'none';
+  s('pdf-logo-label').style.display = 'flex';
+}
+
+async function gerarPDF() {
+  const empresa     = s('pdf-empresa').value.trim();
+  const responsavel = s('pdf-responsavel').value.trim();
+  const inicio      = s('pdf-inicio').value;
+  const fim         = s('pdf-fim').value;
+  const obs         = s('pdf-obs').value.trim();
+  const errEl       = s('pdf-modal-error');
+  errEl.style.display = 'none';
+
+  if (!empresa || !responsavel || !inicio || !fim) {
+    errEl.textContent = 'Preencha empresa, responsável e período.';
+    errEl.style.display = 'block';
+    return;
+  }
+  if (new Date(inicio) > new Date(fim)) {
+    errEl.textContent = 'A data de início não pode ser maior que a data final.';
+    errEl.style.display = 'block';
+    return;
+  }
+
+  const btn = s('btn-gerar-pdf');
+  btn.disabled = true; btn.textContent = 'Buscando dados...';
+
+  try {
+    // Busca todas as transações do período
+    const params = new URLSearchParams({ startDate: inicio, endDate: fim, limit: 500 });
+    const d = await api(`/transactions?${params}`);
+    const txs = d.data || [];
+
+    const income  = txs.filter(t => t.type === 'INCOME').reduce((a,t) => a + Number(t.amount), 0);
+    const expense = txs.filter(t => t.type === 'EXPENSE').reduce((a,t) => a + Number(t.amount), 0);
+    const balance = income - expense;
+
+    // Monta o HTML do PDF
+    const logoHtml = logoBase64
+      ? `<img src="${logoBase64}" style="max-height:70px;max-width:180px;object-fit:contain">`
+      : `<div style="width:48px;height:48px;background:#1A6B4A;border-radius:10px;display:flex;align-items:center;justify-content:center;color:white;font-size:22px;font-weight:700">₣</div>`;
+
+    const rowsHtml = txs.length === 0
+      ? `<tr><td colspan="5" style="text-align:center;color:#999;padding:20px">Nenhuma movimentação no período</td></tr>`
+      : txs.map((t,i) => `
+        <tr style="background:${i%2===0?'#fff':'#f9f9f7'}">
+          <td style="padding:8px 12px">${fmtDateBR(t.date)}</td>
+          <td style="padding:8px 12px">${t.description}</td>
+          <td style="padding:8px 12px">${t.category}</td>
+          <td style="padding:8px 12px;text-align:center">
+            <span style="padding:2px 10px;border-radius:20px;font-size:11px;font-weight:600;background:${t.type==='INCOME'?'#E6F4ED':'#FBF0F0'};color:${t.type==='INCOME'?'#1A6B4A':'#B83232'}">
+              ${t.type==='INCOME'?'Receita':'Despesa'}
+            </span>
+          </td>
+          <td style="padding:8px 12px;text-align:right;font-weight:600;color:${t.type==='INCOME'?'#1A6B4A':'#B83232'}">
+            ${t.type==='INCOME'?'+':'-'}${fmt(t.amount)}
+          </td>
+        </tr>`).join('');
+
+    const geradoEm = new Date().toLocaleDateString('pt-BR', { day:'2-digit', month:'long', year:'numeric', hour:'2-digit', minute:'2-digit' });
+
+    const htmlPDF = `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8">
+    <title>Relatório — ${empresa}</title>
+    <style>
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+      body { font-family: 'Segoe UI', Arial, sans-serif; color: #1A1916; background: #fff; font-size: 13px; }
+      .page { padding: 40px 48px; max-width: 900px; margin: 0 auto; }
+      .header { display: flex; justify-content: space-between; align-items: flex-start; padding-bottom: 24px; border-bottom: 2px solid #1A6B4A; margin-bottom: 28px; }
+      .header-left { display: flex; align-items: center; gap: 16px; }
+      .header-right { text-align: right; font-size: 12px; color: #666; }
+      .empresa { font-size: 20px; font-weight: 700; color: #1A1916; }
+      .subtitulo { font-size: 13px; color: #666; margin-top: 2px; }
+      .periodo { font-size: 13px; color: #1A6B4A; font-weight: 600; margin-top: 4px; }
+      .kpis { display: grid; grid-template-columns: repeat(3,1fr); gap: 16px; margin-bottom: 28px; }
+      .kpi { background: #f7f6f3; border-radius: 10px; padding: 16px 20px; border-left: 4px solid #ccc; }
+      .kpi.green { border-color: #1A6B4A; }
+      .kpi.red   { border-color: #B83232; }
+      .kpi.blue  { border-color: #1A4A7A; }
+      .kpi-label { font-size: 11px; color: #999; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
+      .kpi-val   { font-size: 22px; font-weight: 700; }
+      .kpi.green .kpi-val { color: #1A6B4A; }
+      .kpi.red   .kpi-val { color: #B83232; }
+      .kpi.blue  .kpi-val { color: #1A4A7A; }
+      table { width: 100%; border-collapse: collapse; margin-bottom: 28px; }
+      thead tr { background: #1A6B4A; color: white; }
+      thead th { padding: 10px 12px; text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600; }
+      thead th:last-child { text-align: right; }
+      tbody tr:hover { background: #f0f0ee !important; }
+      .footer { border-top: 1px solid #ddd; padding-top: 16px; display: flex; justify-content: space-between; font-size: 11px; color: #999; }
+      .obs-box { background: #fffbf0; border-left: 4px solid #A05E10; border-radius: 6px; padding: 12px 16px; margin-bottom: 24px; font-size: 13px; color: #5a4010; }
+      .obs-label { font-weight: 600; margin-bottom: 4px; color: #A05E10; font-size: 11px; text-transform: uppercase; }
+      @media print {
+        body { print-color-adjust: exact; -webkit-print-color-adjust: exact; }
+        .no-print { display: none; }
+      }
+    </style></head><body>
+    <div class="page">
+      <div class="header">
+        <div class="header-left">
+          ${logoHtml}
+          <div>
+            <div class="empresa">${empresa}</div>
+            <div class="subtitulo">Relatório de Prestação de Contas</div>
+            <div class="periodo">Período: ${fmtDateBR(inicio)} a ${fmtDateBR(fim)}</div>
+          </div>
+        </div>
+        <div class="header-right">
+          <div>Responsável</div>
+          <strong style="color:#1A1916;font-size:14px">${responsavel}</strong>
+          <div style="margin-top:8px">Gerado em</div>
+          <div>${geradoEm}</div>
+        </div>
+      </div>
+
+      <div class="kpis">
+        <div class="kpi green"><div class="kpi-label">Total Receitas</div><div class="kpi-val">${fmt(income)}</div></div>
+        <div class="kpi red"><div class="kpi-label">Total Despesas</div><div class="kpi-val">${fmt(expense)}</div></div>
+        <div class="kpi blue"><div class="kpi-label">Saldo do Período</div><div class="kpi-val" style="color:${balance>=0?'#1A6B4A':'#B83232'}">${fmt(balance)}</div></div>
+      </div>
+
+      ${obs ? `<div class="obs-box"><div class="obs-label">Observações</div>${obs}</div>` : ''}
+
+      <table>
+        <thead>
+          <tr>
+            <th>Data</th><th>Descrição</th><th>Categoria</th><th>Tipo</th><th style="text-align:right">Valor</th>
+          </tr>
+        </thead>
+        <tbody>${rowsHtml}</tbody>
+      </table>
+
+      <div class="footer">
+        <span>FinControl — Sistema de Prestação de Contas</span>
+        <span>${txs.length} registro(s) no período</span>
+      </div>
+
+      <div class="no-print" style="margin-top:32px;text-align:center">
+        <button id="btn-download-pdf" onclick="downloadPDF()" style="padding:12px 32px;background:#1A6B4A;color:white;border:none;border-radius:8px;font-size:15px;cursor:pointer;font-weight:600">⬇ Baixar PDF</button>
+      </div>
+      <scr` + `ipt src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></scr` + `ipt>
+      <scr` + `ipt>
+        function downloadPDF() {
+          const btn = document.getElementById('btn-download-pdf');
+          const wrap = document.querySelector('.no-print');
+          wrap.style.display = 'none';
+          const el = document.querySelector('.page');
+          html2pdf().set({
+            margin: [10, 10, 10, 10],
+            filename: 'relatorio-fincontrol.pdf',
+            image: { type: 'jpeg', quality: 0.98 },
+            html2canvas: { scale: 2, useCORS: true },
+            jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+          }).from(el).save().then(() => {
+            wrap.style.display = 'block';
+          });
+        }
+      </scr` + `ipt>
+    </div>
+    </body></html>`;
+
+    // Abre em nova aba e imprime
+    const win = window.open('', '_blank');
+    win.document.write(htmlPDF);
+    win.document.close();
+    win.focus();
+    setTimeout(() => win.print(), 800);
+
+    closePdfModal();
+    toast('PDF gerado com sucesso!', 'success');
+  } catch(e) {
+    errEl.textContent = 'Erro ao buscar dados: ' + e.message;
+    errEl.style.display = 'block';
+  } finally {
+    btn.disabled = false; btn.textContent = '⬇ Gerar PDF';
+  }
+}
+
 // ── UTILS ──
 function fmt(v){ return new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(v); }
 function fmtDate(d){ return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
@@ -875,8 +1166,6 @@ function toast(msg,type='success'){
   el.innerHTML=`<span class="t-icon">${type==='success'?'✓':'!'}</span> ${msg}`;
   s('toast-container').appendChild(el); setTimeout(()=>el.remove(),3500);
 }
-s('edit-modal').addEventListener('click',e=>{if(e.target===s('edit-modal'))closeModal();});
-
 // Auto-login
 ;(async()=>{
   if(!token) return;
