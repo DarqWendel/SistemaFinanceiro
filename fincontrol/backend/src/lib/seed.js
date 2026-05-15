@@ -1,4 +1,3 @@
-// src/lib/seed.js
 import bcrypt from 'bcryptjs'
 import { prisma } from './prisma.js'
 
