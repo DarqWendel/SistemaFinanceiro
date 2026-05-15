@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>FortGlass — Prestação de Contas</title>
+<title>FinControl — Prestação de Contas</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
@@ -19,9 +19,11 @@
     --text: #0F1E35;
     --text2: #4A5D78;
     --text3: #8497B0;
-    --accent: #1A6B4A;
-    --accent-light: #E6F4ED;
-    --accent-mid: #2E8B62;
+    --accent: #1A3A6B;
+    --accent-light: #E6EDF8;
+    --accent-mid: #2E5FA8;
+    --positive: #1A6B4A;
+    --positive-light: #E6F4ED;
     --danger: #B83232;
     --danger-light: #FBF0F0;
     --warning: #A05E10;
@@ -93,7 +95,7 @@
     transition: border-color .15s, box-shadow .15s;
     outline: none;
   }
-  .field input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(26,107,74,0.12); }
+  .field input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(26,58,107,0.12); }
   .btn-primary {
     width: 100%; padding: 12px;
     background: var(--accent); color: white;
@@ -215,7 +217,7 @@
   .kpi-icon.danger { background: var(--danger-light); color: var(--danger); }
   .kpi-label { font-size: 11px; font-weight: 600; color: var(--text3); text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 6px; }
   .kpi-value { font-size: 22px; font-weight: 700; letter-spacing: -0.5px; font-family: var(--mono); line-height: 1.2; }
-  .kpi-value.green { color: var(--accent); }
+  .kpi-value.green { color: var(--positive); }
   .kpi-value.red { color: var(--danger); }
   .kpi-value.neutral { color: var(--text); }
   .kpi-trend { font-size: 12px; color: var(--text3); margin-top: 6px; display: flex; align-items: center; gap: 4px; }
@@ -260,13 +262,13 @@
     width: 34px; height: 34px; border-radius: 9px;
     display: flex; align-items: center; justify-content: center; font-size: 14px; flex-shrink: 0;
   }
-  .tx-icon.income { background: var(--accent-light); color: var(--accent); }
+  .tx-icon.income { background: var(--positive-light); color: var(--positive); }
   .tx-icon.expense { background: var(--danger-light); color: var(--danger); }
   .tx-info { flex: 1; min-width: 0; }
   .tx-info .tx-desc { font-size: 13px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   .tx-info .tx-meta { font-size: 11px; color: var(--text3); margin-top: 1px; }
   .tx-amount { flex-shrink: 0; font-family: var(--mono); font-size: 13px; font-weight: 600; text-align: right; }
-  .tx-amount.income { color: var(--accent); }
+  .tx-amount.income { color: var(--positive); }
   .tx-amount.expense { color: var(--danger); }
 
   /* Categories */
@@ -290,7 +292,7 @@
     background: var(--surface); color: var(--text); outline: none;
     transition: border-color .15s, box-shadow .15s;
   }
-  .form-field input:focus, .form-field select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(26,107,74,0.1); }
+  .form-field input:focus, .form-field select:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(26,58,107,0.1); }
   .form-field.error input, .form-field.error select { border-color: var(--danger); }
   .form-error { font-size: 12px; color: var(--danger); margin-top: 4px; display: none; }
   .form-field.error .form-error { display: block; }
@@ -321,7 +323,7 @@
     display: inline-flex; align-items: center; gap: 4px;
     padding: 3px 10px; border-radius: 20px; font-size: 12px; font-weight: 500;
   }
-  .badge-green { background: var(--accent-light); color: var(--accent); }
+  .badge-green { background: var(--positive-light); color: var(--positive); }
   .badge-red { background: var(--danger-light); color: var(--danger); }
   .badge-gray { background: var(--surface2); color: var(--text2); }
   .action-btns { display: flex; gap: 6px; }
@@ -415,8 +417,8 @@
     <div class="auth-logo">
       <div class="logo-icon">FG</div>
       <div>
-        <div class="logo-text">FortGlass</div>
-        <div class="logo-sub">Soluções em Vidros e Espelhos</div>
+        <div class="logo-text">FinControl</div>
+        <div class="logo-sub">Prestação de Contas</div>
       </div>
     </div>
     <div class="auth-title">Bem-vindo de volta</div>
@@ -442,8 +444,8 @@
     <div class="sidebar-logo">
       <div class="s-icon">FG</div>
       <div>
-        <div class="s-name">FortGlass</div>
-        <div class="s-tagline">Soluções em Vidros e Espelhos</div>
+        <div class="s-name">FinControl</div>
+        <div class="s-tagline">Prestação de Contas</div>
       </div>
     </div>
     <nav class="sidebar-nav">
@@ -970,7 +972,7 @@ async function loadHistorico(page=1) {
   try {
     const d=await api(`/transactions?${params}`);
     if(!d.data.length){s('historico-table-wrap').innerHTML=`<div class="empty-state"><div class="es-icon">◎</div><strong>Nenhuma movimentação encontrada</strong><p>Tente ajustar os filtros ou registre uma nova movimentação.</p></div>`;return;}
-    s('historico-table-wrap').innerHTML=`<table class="data-table"><thead><tr><th>Descrição</th><th>Tipo</th><th>Categoria</th><th>Data</th><th>Valor</th><th>Ações</th></tr></thead><tbody>${d.data.map(t=>`<tr><td style="font-weight:500">${t.description}</td><td><span class="badge ${t.type==='INCOME'?'badge-green':'badge-red'}">${t.type==='INCOME'?'↑ Receita':'↓ Despesa'}</span></td><td><span class="badge badge-gray">${t.category}</span></td><td style="font-family:var(--mono);color:var(--text2)">${fmtDateBR(t.date)}</td><td style="font-family:var(--mono);font-weight:500;color:${t.type==='INCOME'?'var(--accent)':'var(--danger)'}">${t.type==='INCOME'?'+':'-'}${fmt(t.amount)}</td><td><div class="action-btns"><button class="icon-btn" onclick="openEdit('${t.id}')" title="Editar">✎</button><button class="icon-btn danger" onclick="deleteTx('${t.id}')" title="Excluir">✕</button></div></td></tr>`).join('')}</tbody></table>`;
+    s('historico-table-wrap').innerHTML=`<table class="data-table"><thead><tr><th>Descrição</th><th>Tipo</th><th>Categoria</th><th>Data</th><th>Valor</th><th>Ações</th></tr></thead><tbody>${d.data.map(t=>`<tr><td style="font-weight:500">${t.description}</td><td><span class="badge ${t.type==='INCOME'?'badge-green':'badge-red'}">${t.type==='INCOME'?'↑ Receita':'↓ Despesa'}</span></td><td><span class="badge badge-gray">${t.category}</span></td><td style="font-family:var(--mono);color:var(--text2)">${fmtDateBR(t.date)}</td><td style="font-family:var(--mono);font-weight:500;color:${t.type==='INCOME'?'var(--positive)':'var(--danger)'}">${t.type==='INCOME'?'+':'-'}${fmt(t.amount)}</td><td><div class="action-btns"><button class="icon-btn" onclick="openEdit('${t.id}')" title="Editar">✎</button><button class="icon-btn danger" onclick="deleteTx('${t.id}')" title="Excluir">✕</button></div></td></tr>`).join('')}</tbody></table>`;
   } catch(e){ s('historico-table-wrap').innerHTML=`<div class="empty-state"><strong>Erro</strong><p>${e.message}</p></div>`; }
 }
 // Compatibilidade com o filtro original
@@ -1014,7 +1016,7 @@ async function renderRelatorio() {
     if(!d.summary){s('rel-content').innerHTML='<div class="empty-state"><div class="es-icon">◫</div><strong>Nenhuma movimentação neste período</strong><p>Não há registros para o mês selecionado.</p></div>';return;}
     const {income,expense,balance}=d.summary;
     const nomeMes=new Date(y,m-1,1).toLocaleDateString('pt-BR',{month:'long',year:'numeric'});
-    s('rel-content').innerHTML=`<div style="font-size:14px;color:var(--text2);margin-bottom:1rem">Período: <strong style="color:var(--text)">${nomeMes.charAt(0).toUpperCase()+nomeMes.slice(1)}</strong></div><div class="report-summary"><div class="summary-card"><div class="sc-label">Total Receitas</div><div class="sc-val" style="color:var(--accent)">${fmt(income)}</div></div><div class="summary-card"><div class="sc-label">Total Despesas</div><div class="sc-val" style="color:var(--danger)">${fmt(expense)}</div></div><div class="summary-card"><div class="sc-label">Saldo do Período</div><div class="sc-val" style="color:${balance>=0?'var(--accent)':'var(--danger)'}">${fmt(balance)}</div></div></div><table class="data-table"><thead><tr><th>Descrição</th><th>Tipo</th><th>Categoria</th><th>Data</th><th>Valor</th></tr></thead><tbody>${d.transactions.map(t=>`<tr><td>${t.description}</td><td><span class="badge ${t.type==='INCOME'?'badge-green':'badge-red'}">${t.type==='INCOME'?'Receita':'Despesa'}</span></td><td>${t.category}</td><td style="font-family:var(--mono);color:var(--text2)">${fmtDateBR(t.date)}</td><td style="font-family:var(--mono);font-weight:500;color:${t.type==='INCOME'?'var(--accent)':'var(--danger)'}">${t.type==='INCOME'?'+':'-'}${fmt(t.amount)}</td></tr>`).join('')}</tbody></table>`;
+    s('rel-content').innerHTML=`<div style="font-size:14px;color:var(--text2);margin-bottom:1rem">Período: <strong style="color:var(--text)">${nomeMes.charAt(0).toUpperCase()+nomeMes.slice(1)}</strong></div><div class="report-summary"><div class="summary-card"><div class="sc-label">Total Receitas</div><div class="sc-val" style="color:var(--positive)">${fmt(income)}</div></div><div class="summary-card"><div class="sc-label">Total Despesas</div><div class="sc-val" style="color:var(--danger)">${fmt(expense)}</div></div><div class="summary-card"><div class="sc-label">Saldo do Período</div><div class="sc-val" style="color:${balance>=0?'var(--positive)':'var(--danger)'}">${fmt(balance)}</div></div></div><table class="data-table"><thead><tr><th>Descrição</th><th>Tipo</th><th>Categoria</th><th>Data</th><th>Valor</th></tr></thead><tbody>${d.transactions.map(t=>`<tr><td>${t.description}</td><td><span class="badge ${t.type==='INCOME'?'badge-green':'badge-red'}">${t.type==='INCOME'?'Receita':'Despesa'}</span></td><td>${t.category}</td><td style="font-family:var(--mono);color:var(--text2)">${fmtDateBR(t.date)}</td><td style="font-family:var(--mono);font-weight:500;color:${t.type==='INCOME'?'var(--positive)':'var(--danger)'}">${t.type==='INCOME'?'+':'-'}${fmt(t.amount)}</td></tr>`).join('')}</tbody></table>`;
   } catch(e){ s('rel-content').innerHTML=`<div class="empty-state"><strong>Erro</strong><p>${e.message}</p></div>`; }
 }
 
@@ -1027,7 +1029,7 @@ async function renderSemanal() {
     const ss=fmtDateBR(d.period.startDate), es=fmtDateBR(d.period.endDate);
     if(!d.summary){s('sem-content').innerHTML=`<div style="font-size:13px;color:var(--text2);margin-bottom:1rem">Período: <strong>${ss}</strong> a <strong>${es}</strong></div><div class="empty-state"><div class="es-icon">◪</div><strong>Nenhuma movimentação nesta semana</strong></div>`;return;}
     const {income,expense,balance}=d.summary;
-    s('sem-content').innerHTML=`<div style="font-size:14px;color:var(--text2);margin-bottom:1rem">Período: <strong style="color:var(--text)">${ss}</strong> a <strong style="color:var(--text)">${es}</strong></div><div class="report-summary"><div class="summary-card"><div class="sc-label">Receitas</div><div class="sc-val" style="color:var(--accent)">${fmt(income)}</div></div><div class="summary-card"><div class="sc-label">Despesas</div><div class="sc-val" style="color:var(--danger)">${fmt(expense)}</div></div><div class="summary-card"><div class="sc-label">Saldo</div><div class="sc-val" style="color:${balance>=0?'var(--accent)':'var(--danger)'}">${fmt(balance)}</div></div></div><table class="data-table"><thead><tr><th>Descrição</th><th>Tipo</th><th>Categoria</th><th>Data</th><th>Valor</th></tr></thead><tbody>${d.transactions.map(t=>`<tr><td>${t.description}</td><td><span class="badge ${t.type==='INCOME'?'badge-green':'badge-red'}">${t.type==='INCOME'?'Receita':'Despesa'}</span></td><td>${t.category}</td><td style="font-family:var(--mono);color:var(--text2)">${fmtDateBR(t.date)}</td><td style="font-family:var(--mono);font-weight:500;color:${t.type==='INCOME'?'var(--accent)':'var(--danger)'}">${t.type==='INCOME'?'+':'-'}${fmt(t.amount)}</td></tr>`).join('')}</tbody></table>`;
+    s('sem-content').innerHTML=`<div style="font-size:14px;color:var(--text2);margin-bottom:1rem">Período: <strong style="color:var(--text)">${ss}</strong> a <strong style="color:var(--text)">${es}</strong></div><div class="report-summary"><div class="summary-card"><div class="sc-label">Receitas</div><div class="sc-val" style="color:var(--positive)">${fmt(income)}</div></div><div class="summary-card"><div class="sc-label">Despesas</div><div class="sc-val" style="color:var(--danger)">${fmt(expense)}</div></div><div class="summary-card"><div class="sc-label">Saldo</div><div class="sc-val" style="color:${balance>=0?'var(--positive)':'var(--danger)'}">${fmt(balance)}</div></div></div><table class="data-table"><thead><tr><th>Descrição</th><th>Tipo</th><th>Categoria</th><th>Data</th><th>Valor</th></tr></thead><tbody>${d.transactions.map(t=>`<tr><td>${t.description}</td><td><span class="badge ${t.type==='INCOME'?'badge-green':'badge-red'}">${t.type==='INCOME'?'Receita':'Despesa'}</span></td><td>${t.category}</td><td style="font-family:var(--mono);color:var(--text2)">${fmtDateBR(t.date)}</td><td style="font-family:var(--mono);font-weight:500;color:${t.type==='INCOME'?'var(--positive)':'var(--danger)'}">${t.type==='INCOME'?'+':'-'}${fmt(t.amount)}</td></tr>`).join('')}</tbody></table>`;
   } catch(e){ s('sem-content').innerHTML=`<div class="empty-state"><strong>Erro</strong><p>${e.message}</p></div>`; }
 }
 
@@ -1215,7 +1217,7 @@ async function gerarPDF() {
       </table>
 
       <div class="footer">
-        <span>FortGlass — Sistema de Prestação de Contas</span>
+        <span>FinControl — Sistema de Prestação de Contas</span>
         <span>${txs.length} registro(s) no período</span>
       </div>
 
