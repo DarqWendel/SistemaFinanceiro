@@ -3,30 +3,30 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>FinControl — Prestação de Contas</title>
+<title>FortGlass — Prestação de Contas</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
   :root {
-    --bg: #F7F6F3;
+    --bg: #F4F6F9;
     --surface: #FFFFFF;
-    --surface2: #F0EEE9;
-    --border: #E3E0D8;
-    --border2: #CCCAC3;
-    --text: #1A1916;
-    --text2: #6B6860;
-    --text3: #9E9C96;
-    --accent: #1A6B4A;
-    --accent-light: #E6F4ED;
-    --accent-mid: #2E8B62;
+    --surface2: #EDF1F7;
+    --border: #D8E0EC;
+    --border2: #B8C5D9;
+    --text: #0F1E35;
+    --text2: #4A5D78;
+    --text3: #8497B0;
+    --accent: #1A3A6B;
+    --accent-light: #E6EDF8;
+    --accent-mid: #2E5FA8;
     --danger: #B83232;
     --danger-light: #FBF0F0;
     --warning: #A05E10;
     --warning-light: #FEF5E7;
-    --info: #1A4A7A;
-    --info-light: #EEF4FC;
+    --info: #1A6B9A;
+    --info-light: #E6F4FB;
     --radius: 10px;
     --radius-lg: 16px;
     --shadow: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
@@ -51,7 +51,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    background: linear-gradient(160deg, #0F3D28 0%, #1A6B4A 50%, #1E7A53 100%);
+    background: linear-gradient(160deg, #0A1628 0%, #1A3A6B 50%, #2E5FA8 100%);
     padding: 2rem;
   }
   .auth-card {
@@ -386,10 +386,10 @@
 <div id="auth-screen">
   <div class="auth-card">
     <div class="auth-logo">
-      <div class="logo-icon">₣</div>
+      <div class="logo-icon">FG</div>
       <div>
-        <div class="logo-text">FinControl</div>
-        <div class="logo-sub">Gestão Financeira</div>
+        <div class="logo-text">FortGlass</div>
+        <div class="logo-sub">Soluções em Vidros e Espelhos</div>
       </div>
     </div>
     <div class="auth-title">Bem-vindo de volta</div>
@@ -413,10 +413,10 @@
   <!-- Sidebar -->
   <aside class="sidebar">
     <div class="sidebar-logo">
-      <div class="s-icon">₣</div>
+      <div class="s-icon">FG</div>
       <div>
-        <div class="s-name">FinControl</div>
-        <div class="s-tagline">Gestão Financeira</div>
+        <div class="s-name">FortGlass</div>
+        <div class="s-tagline">Soluções em Vidros e Espelhos</div>
       </div>
     </div>
     <nav class="sidebar-nav">
@@ -709,13 +709,13 @@
 // ─────────────────────────────────────────────
 // CONFIGURAÇÃO — URL do seu backend
 // ─────────────────────────────────────────────
-const API = 'https://fincontrol-backend-mf7x.onrender.com/api'
+const API = 'http://localhost:3333/api';
 
 const CATS = {
   INCOME:  ['Vendas','Serviços','Salário','Investimentos','Outros'],
   EXPENSE: ['Fornecedores','Pessoal','Infraestrutura','Marketing','Impostos','Outros']
 };
-const CAT_COLORS = ['#1A6B4A','#1A4A7A','#A05E10','#7A1A6B','#B83232','#6B6B6B'];
+const CAT_COLORS = ['#1A3A6B','#1A4A7A','#A05E10','#7A1A6B','#B83232','#6B6B6B'];
 
 let token       = localStorage.getItem('fc_token') || '';
 let currentType = 'INCOME';
@@ -1020,7 +1020,7 @@ async function gerarPDF() {
     // Monta o HTML do PDF
     const logoHtml = logoBase64
       ? `<img src="${logoBase64}" style="max-height:70px;max-width:180px;object-fit:contain">`
-      : `<div style="width:48px;height:48px;background:#1A6B4A;border-radius:10px;display:flex;align-items:center;justify-content:center;color:white;font-size:22px;font-weight:700">₣</div>`;
+      : `<div style="width:48px;height:48px;background:#1A3A6B;border-radius:10px;display:flex;align-items:center;justify-content:center;color:white;font-size:22px;font-weight:700">FG</div>`;
 
     const rowsHtml = txs.length === 0
       ? `<tr><td colspan="5" style="text-align:center;color:#999;padding:20px">Nenhuma movimentação no período</td></tr>`
@@ -1030,11 +1030,11 @@ async function gerarPDF() {
           <td style="padding:8px 12px">${t.description}</td>
           <td style="padding:8px 12px">${t.category}</td>
           <td style="padding:8px 12px;text-align:center">
-            <span style="padding:2px 10px;border-radius:20px;font-size:11px;font-weight:600;background:${t.type==='INCOME'?'#E6F4ED':'#FBF0F0'};color:${t.type==='INCOME'?'#1A6B4A':'#B83232'}">
+            <span style="padding:2px 10px;border-radius:20px;font-size:11px;font-weight:600;background:${t.type==='INCOME'?'#E6EDF8':'#FBF0F0'};color:${t.type==='INCOME'?'#1A3A6B':'#B83232'}">
               ${t.type==='INCOME'?'Receita':'Despesa'}
             </span>
           </td>
-          <td style="padding:8px 12px;text-align:right;font-weight:600;color:${t.type==='INCOME'?'#1A6B4A':'#B83232'}">
+          <td style="padding:8px 12px;text-align:right;font-weight:600;color:${t.type==='INCOME'?'#1A3A6B':'#B83232'}">
             ${t.type==='INCOME'?'+':'-'}${fmt(t.amount)}
           </td>
         </tr>`).join('');
@@ -1047,24 +1047,24 @@ async function gerarPDF() {
       * { box-sizing: border-box; margin: 0; padding: 0; }
       body { font-family: 'Segoe UI', Arial, sans-serif; color: #1A1916; background: #fff; font-size: 13px; }
       .page { padding: 40px 48px; max-width: 900px; margin: 0 auto; }
-      .header { display: flex; justify-content: space-between; align-items: flex-start; padding-bottom: 24px; border-bottom: 2px solid #1A6B4A; margin-bottom: 28px; }
+      .header { display: flex; justify-content: space-between; align-items: flex-start; padding-bottom: 24px; border-bottom: 2px solid #1A3A6B; margin-bottom: 28px; }
       .header-left { display: flex; align-items: center; gap: 16px; }
       .header-right { text-align: right; font-size: 12px; color: #666; }
       .empresa { font-size: 20px; font-weight: 700; color: #1A1916; }
       .subtitulo { font-size: 13px; color: #666; margin-top: 2px; }
-      .periodo { font-size: 13px; color: #1A6B4A; font-weight: 600; margin-top: 4px; }
+      .periodo { font-size: 13px; color: #1A3A6B; font-weight: 600; margin-top: 4px; }
       .kpis { display: grid; grid-template-columns: repeat(3,1fr); gap: 16px; margin-bottom: 28px; }
       .kpi { background: #f7f6f3; border-radius: 10px; padding: 16px 20px; border-left: 4px solid #ccc; }
-      .kpi.green { border-color: #1A6B4A; }
+      .kpi.green { border-color: #1A3A6B; }
       .kpi.red   { border-color: #B83232; }
       .kpi.blue  { border-color: #1A4A7A; }
       .kpi-label { font-size: 11px; color: #999; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
       .kpi-val   { font-size: 22px; font-weight: 700; }
-      .kpi.green .kpi-val { color: #1A6B4A; }
+      .kpi.green .kpi-val { color: #1A3A6B; }
       .kpi.red   .kpi-val { color: #B83232; }
       .kpi.blue  .kpi-val { color: #1A4A7A; }
       table { width: 100%; border-collapse: collapse; margin-bottom: 28px; }
-      thead tr { background: #1A6B4A; color: white; }
+      thead tr { background: #1A3A6B; color: white; }
       thead th { padding: 10px 12px; text-align: left; font-size: 11px; text-transform: uppercase; letter-spacing: 0.5px; font-weight: 600; }
       thead th:last-child { text-align: right; }
       tbody tr:hover { background: #f0f0ee !important; }
@@ -1097,7 +1097,7 @@ async function gerarPDF() {
       <div class="kpis">
         <div class="kpi green"><div class="kpi-label">Total Receitas</div><div class="kpi-val">${fmt(income)}</div></div>
         <div class="kpi red"><div class="kpi-label">Total Despesas</div><div class="kpi-val">${fmt(expense)}</div></div>
-        <div class="kpi blue"><div class="kpi-label">Saldo do Período</div><div class="kpi-val" style="color:${balance>=0?'#1A6B4A':'#B83232'}">${fmt(balance)}</div></div>
+        <div class="kpi blue"><div class="kpi-label">Saldo do Período</div><div class="kpi-val" style="color:${balance>=0?'#1A3A6B':'#B83232'}">${fmt(balance)}</div></div>
       </div>
 
       ${obs ? `<div class="obs-box"><div class="obs-label">Observações</div>${obs}</div>` : ''}
@@ -1112,12 +1112,12 @@ async function gerarPDF() {
       </table>
 
       <div class="footer">
-        <span>FinControl — Sistema de Prestação de Contas</span>
+        <span>FortGlass — Sistema de Prestação de Contas</span>
         <span>${txs.length} registro(s) no período</span>
       </div>
 
       <div class="no-print" style="margin-top:32px;text-align:center">
-        <button id="btn-download-pdf" onclick="downloadPDF()" style="padding:12px 32px;background:#1A6B4A;color:white;border:none;border-radius:8px;font-size:15px;cursor:pointer;font-weight:600">⬇ Baixar PDF</button>
+        <button id="btn-download-pdf" onclick="downloadPDF()" style="padding:12px 32px;background:#1A3A6B;color:white;border:none;border-radius:8px;font-size:15px;cursor:pointer;font-weight:600">⬇ Baixar PDF</button>
       </div>
       <scr` + `ipt src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></scr` + `ipt>
       <scr` + `ipt>
