@@ -212,7 +212,7 @@
     width: 38px; height: 38px; border-radius: 10px;
     display: flex; align-items: center; justify-content: center;
     font-size: 17px; margin-bottom: 12px;
-    background: var(--accent-light); color: var(--accent);
+    background: var(--positive-light); color: var(--positive);
   }
   .kpi-icon.danger { background: var(--danger-light); color: var(--danger); }
   .kpi-label { font-size: 11px; font-weight: 600; color: var(--text3); text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 6px; }
@@ -222,7 +222,7 @@
   .kpi-value.neutral { color: var(--text); }
   .kpi-trend { font-size: 12px; color: var(--text3); margin-top: 6px; display: flex; align-items: center; gap: 4px; }
 
-  .dash-grid { display: grid; grid-template-columns: 1fr 320px; gap: 1.5rem; }
+  .dash-grid { display: grid; grid-template-columns: 1fr 320px; gap: 1.5rem; align-items: start; }
   .card {
     background: var(--surface); border: 1px solid var(--border);
     border-radius: var(--radius-lg); padding: 1.5rem;
@@ -518,17 +518,17 @@
         </div>
 
         <div class="dash-grid">
-          <div class="card">
+          <div class="card" style="padding-bottom:1rem">
             <div class="card-header">
               <div>
                 <div class="card-title">Evolução Financeira</div>
                 <div class="card-sub">Receitas vs Despesas — últimos 6 meses</div>
               </div>
             </div>
-            <div style="position:relative;height:180px">
+            <div style="position:relative;height:200px">
               <canvas id="chart-bars"></canvas>
             </div>
-            <div class="chart-legend">
+            <div class="chart-legend" style="margin-top:10px">
               <div class="legend-item"><div class="legend-dot" style="background:var(--accent);opacity:.9"></div>Receitas</div>
               <div class="legend-item"><div class="legend-dot" style="background:var(--danger);opacity:.7"></div>Despesas</div>
             </div>
