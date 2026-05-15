@@ -6,6 +6,7 @@
 <title>FortGlass — Prestação de Contas</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,400;0,9..40,500;0,9..40,600;1,9..40,300&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
 <style>
   *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -522,8 +523,8 @@
                 <div class="card-sub">Receitas vs Despesas — últimos 6 meses</div>
               </div>
             </div>
-            <div class="chart-bars" id="chart-bars">
-              <div class="loading-wrap"><div class="spinner"></div></div>
+            <div style="position:relative;height:220px">
+              <canvas id="chart-bars"></canvas>
             </div>
             <div class="chart-legend">
               <div class="legend-item"><div class="legend-dot" style="background:var(--accent);opacity:.9"></div>Receitas</div>
@@ -871,13 +872,80 @@ async function refreshDashboard() {
 }
 
 function renderChart(chartData) {
-  const now=new Date(); const months=[];
-  for(let i=5;i>=0;i--){const d=new Date(now.getFullYear(),now.getMonth()-i,1);months.push({date:d,label:d.toLocaleDateString('pt-BR',{month:'short'})});}
-  const byMonth={};
-  (chartData||[]).forEach(row=>{const key=new Date(row.month).toISOString().slice(0,7);if(!byMonth[key])byMonth[key]={income:0,expense:0};byMonth[key][row.type==='INCOME'?'income':'expense']=row.total;});
-  const maxVal=Math.max(...months.map(m=>{const k=m.date.toISOString().slice(0,7);const r=byMonth[k]||{};return Math.max(r.income||0,r.expense||0);}),1);
-  s('chart-bars').innerHTML=months.map(m=>{const k=m.date.toISOString().slice(0,7);const r=(byMonth[k]||{}).income||0;const e=(byMonth[k]||{}).expense||0;const rh=Math.round(r/maxVal*155);const eh=Math.round(e/maxVal*155);
-    return `<div class="bar-group"><div class="bar-wrap"><div class="bar income" style="height:${rh}px" title="Receitas: ${fmt(r)}"></div><div class="bar expense" style="height:${eh}px" title="Despesas: ${fmt(e)}"></div></div><div class="bar-label">${m.label}</div></div>`;}).join('');
+  const now = new Date();
+  const months = [];
+  for(let i=5;i>=0;i--){
+    const d = new Date(now.getFullYear(), now.getMonth()-i, 1);
+    months.push({ date: d, label: d.toLocaleDateString('pt-BR',{month:'short'}).replace('.','') });
+  }
+  const byMonth = {};
+  (chartData||[]).forEach(row=>{
+    const key = new Date(row.month).toISOString().slice(0,7);
+    if(!byMonth[key]) byMonth[key]={income:0,expense:0};
+    byMonth[key][row.type==='INCOME'?'income':'expense'] = row.total;
+  });
+
+  const labels  = months.map(m => m.label);
+  const incomes  = months.map(m => (byMonth[m.date.toISOString().slice(0,7)]||{}).income  || 0);
+  const expenses = months.map(m => (byMonth[m.date.toISOString().slice(0,7)]||{}).expense || 0);
+
+  const ctx = s('chart-bars').getContext('2d');
+  if(window._finChart) window._finChart.destroy();
+  window._finChart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [
+        {
+          label: 'Receitas',
+          data: incomes,
+          backgroundColor: 'rgba(26,58,107,0.85)',
+          borderRadius: 6,
+          borderSkipped: false,
+        },
+        {
+          label: 'Despesas',
+          data: expenses,
+          backgroundColor: 'rgba(184,50,50,0.7)',
+          borderRadius: 6,
+          borderSkipped: false,
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: '#0F1E35',
+          titleColor: '#8497B0',
+          bodyColor: '#fff',
+          padding: 12,
+          cornerRadius: 8,
+          callbacks: {
+            label: ctx => ` ${ctx.dataset.label}: ${new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(ctx.raw)}`
+          }
+        }
+      },
+      scales: {
+        x: {
+          grid: { display: false },
+          border: { display: false },
+          ticks: { color: '#8497B0', font: { size: 11 } }
+        },
+        y: {
+          grid: { color: 'rgba(0,0,0,0.05)', drawBorder: false },
+          border: { display: false, dash: [4,4] },
+          ticks: {
+            color: '#8497B0', font: { size: 11 },
+            callback: v => v >= 1000 ? 'R$'+(v/1000).toFixed(0)+'k' : 'R$'+v
+          }
+        }
+      }
+    }
+  });
 }
 
 function renderCats(cats) {
