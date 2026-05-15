@@ -44,7 +44,7 @@ app.get('/health', () => ({ status: 'ok', timestamp: new Date().toISOString() })
 
 const __dirname = dirname(fileURLToPath(import.meta.url))
 app.get('/', (request, reply) => {
-  const html = readFileSync(join(__dirname, '../../frontend/sistema-financeiro.html'), 'utf-8')
+  const html = readFileSync(join(__dirname, '../../../frontend/sistema-financeiro.html'), 'utf-8')
   reply.type('text/html').send(html)
 })
 
