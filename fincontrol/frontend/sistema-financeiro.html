@@ -854,7 +854,7 @@ select option { background: var(--surface2); color: var(--text); }
             </div>
             <div class="form-field" id="f-valor">
               <label>Valor (R$) *</label>
-              <input type="number" id="inp-valor" placeholder="0,00" min="0.01" step="0.01">
+              <input type="text" id="inp-valor" placeholder="0,00" inputmode="numeric" autocomplete="off">
               <div class="form-error">Insira um valor maior que zero.</div>
             </div>
             <div class="form-field" id="f-data">
@@ -999,7 +999,7 @@ select option { background: var(--surface2); color: var(--text); }
       </div>
       <div class="form-field" id="ef-valor">
         <label>Valor (R$) *</label>
-        <input type="number" id="e-valor" min="0.01" step="0.01">
+        <input type="text" id="e-valor" placeholder="0,00" inputmode="numeric" autocomplete="off">
         <div class="form-error">Valor inválido.</div>
       </div>
       <div class="form-field">
@@ -1131,12 +1131,13 @@ function setDateDefault()  { s('inp-data').value = fmtDate(new Date()); }
 function setMonthDefault() { const n = new Date(); s('rel-mes').value = `${n.getFullYear()}-${String(n.getMonth()+1).padStart(2,'0')}`; }
 function setWeekDefault()  { const n = new Date(); const day = n.getDay(); const mon = new Date(n); mon.setDate(n.getDate()-day+(day===0?-6:1)); s('rel-semana-inicio').value = fmtDate(mon); }
 function clearForm() {
-  ['inp-desc','inp-valor','inp-cat'].forEach(id => s(id).value = '');
+  ['inp-desc','inp-cat'].forEach(id => s(id).value = '');
+  s('inp-valor').value = '';
   setDateDefault(); ['f-desc','f-valor','f-data'].forEach(id => s(id).classList.remove('error'));
 }
 
 async function submitForm() {
-  const desc = s('inp-desc').value.trim(), valor = parseFloat(s('inp-valor').value);
+  const desc = s('inp-desc').value.trim(), valor = readMasked(s('inp-valor'));
   const data = s('inp-data').value, cat = s('inp-cat').value;
   s('f-desc').classList.toggle('error', !desc);
   s('f-valor').classList.toggle('error', !valor || valor <= 0 || isNaN(valor));
@@ -1287,14 +1288,14 @@ async function openEdit(id) {
   try {
     const t = await api(`/transactions/${id}`);
     editingId = id; populateCatSelect('e-cat', t.type);
-    s('e-desc').value = t.description; s('e-valor').value = Number(t.amount);
+    s('e-desc').value = t.description; setMasked(s('e-valor'), t.amount);
     s('e-data').value = t.date.split('T')[0]; s('e-cat').value = t.category;
     s('edit-modal').classList.add('open');
   } catch(e) { toast(e.message, 'error'); }
 }
 function closeModal() { s('edit-modal').classList.remove('open'); editingId = null; }
 async function saveEdit() {
-  const desc = s('e-desc').value.trim(), valor = parseFloat(s('e-valor').value);
+  const desc = s('e-desc').value.trim(), valor = readMasked(s('e-valor'));
   s('ef-desc').classList.toggle('error', !desc); s('ef-valor').classList.toggle('error', !valor || valor <= 0 || isNaN(valor));
   if (!desc || !valor || valor <= 0 || isNaN(valor)) return;
   try {
@@ -1419,6 +1420,22 @@ async function gerarPDF() {
   }
 }
 
+// ── MÁSCARA DE VALOR ──
+function applyMask(el) {
+  let raw = el.value.replace(/\D/g, '');
+  if (!raw) { el.value = ''; return; }
+  let num = parseInt(raw, 10) / 100;
+  el.value = num.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+function readMasked(el) {
+  const v = el.value.replace(/\./g, '').replace(',', '.');
+  return parseFloat(v);
+}
+function setMasked(el, num) {
+  if (!num && num !== 0) { el.value = ''; return; }
+  el.value = Number(num).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
 // ── UTILS ──
 function fmt(v) { return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(v); }
 function fmtDate(d) { return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`; }
@@ -1428,6 +1445,12 @@ function toast(msg, type = 'success') {
   el.innerHTML = `<span class="t-icon ${type}">${type === 'success' ? '✓' : '!'}</span> ${msg}`;
   s('toast-container').appendChild(el); setTimeout(() => el.remove(), 3500);
 }
+
+// ── APLICAR MÁSCARA NOS CAMPOS DE VALOR ──
+['inp-valor', 'e-valor'].forEach(id => {
+  const el = s(id);
+  if (el) el.addEventListener('input', () => applyMask(el));
+});
 
 // Auto-login
 ;(async () => {
