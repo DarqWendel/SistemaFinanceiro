@@ -737,6 +737,10 @@ select option { background: var(--surface2); color: var(--text); }
       <div class="nav-item" onclick="goPage('historico')">
         <span class="nav-icon">≡</span> Histórico
       </div>
+      <div class="nav-section-label">Financeiro</div>
+      <div class="nav-item" onclick="goPage('contas')">
+        <span class="nav-icon">📋</span> Contas a Pagar
+      </div>
       <div class="nav-section-label">Relatórios</div>
       <div class="nav-item" onclick="goPage('relatorio')">
         <span class="nav-icon">◫</span> Mensal
@@ -763,7 +767,12 @@ select option { background: var(--surface2); color: var(--text); }
         <div class="topbar-title" id="topbar-title">Dashboard</div>
         <div class="topbar-badge" id="topbar-badge" style="display:none"></div>
       </div>
-      <div class="topbar-actions">
+      <div class="topbar-actions" id="topbar-actions-wrap">
+        <div id="dash-mes-wrap" style="display:flex;align-items:center;gap:8px">
+          <input type="month" id="dash-mes" onchange="refreshDashboard()"
+            style="padding:7px 12px;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;font-family:var(--font);font-size:13px;color:var(--text);outline:none;cursor:pointer">
+          <button class="btn btn-ghost" onclick="resetDashMes()" title="Mês atual" style="padding:7px 10px">↺</button>
+        </div>
         <button class="btn btn-blue" onclick="goPage('nova')">＋ Nova Movimentação</button>
       </div>
     </div>
@@ -779,12 +788,12 @@ select option { background: var(--surface2); color: var(--text); }
             <div class="kpi-meta"><div class="kpi-dot"></div><span id="kpi-saldo-trend">—</span></div>
           </div>
           <div class="kpi-card green">
-            <div class="kpi-label">Receitas do Mês</div>
+            <div class="kpi-label" id="kpi-label-rec">Receitas do Mês</div>
             <div class="kpi-value green" id="kpi-receitas">—</div>
             <div class="kpi-meta" id="kpi-rec-count">0 lançamentos</div>
           </div>
           <div class="kpi-card red">
-            <div class="kpi-label">Despesas do Mês</div>
+            <div class="kpi-label" id="kpi-label-desp">Despesas do Mês</div>
             <div class="kpi-value red" id="kpi-despesas">—</div>
             <div class="kpi-meta" id="kpi-desp-count">0 lançamentos</div>
           </div>
@@ -929,6 +938,110 @@ select option { background: var(--surface2); color: var(--text); }
             <button class="btn btn-blue" onclick="openPdfModal('weekly')">⬇ Exportar PDF</button>
           </div>
           <div id="sem-content"></div>
+        </div>
+      </div>
+
+
+      <!-- CONTAS A PAGAR -->
+      <div class="page" id="page-contas">
+
+        <!-- KPIs -->
+        <div class="kpi-grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:20px">
+          <div class="kpi-card red">
+            <div class="kpi-label">Vencidas</div>
+            <div class="kpi-value red" id="bill-kpi-overdue">—</div>
+            <div class="kpi-meta" id="bill-kpi-overdue-count">0 contas</div>
+          </div>
+          <div class="kpi-card amber">
+            <div class="kpi-label">Pendentes</div>
+            <div class="kpi-value amber" id="bill-kpi-pending">—</div>
+            <div class="kpi-meta" id="bill-kpi-pending-count">0 contas</div>
+          </div>
+          <div class="kpi-card green">
+            <div class="kpi-label">Pagas este mês</div>
+            <div class="kpi-value green" id="bill-kpi-paid">—</div>
+            <div class="kpi-meta" id="bill-kpi-paid-count">0 contas</div>
+          </div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 320px;gap:16px">
+
+          <!-- LISTA -->
+          <div class="card">
+            <div class="card-header">
+              <div>
+                <div class="card-title">Lista de Contas</div>
+                <div class="card-sub">Ordenadas por vencimento</div>
+              </div>
+              <div style="display:flex;gap:8px;align-items:center">
+                <select id="bill-filter-status" onchange="loadBills()"
+                  style="padding:7px 10px;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;font-family:var(--font);font-size:12px;color:var(--text);outline:none">
+                  <option value="">Todos</option>
+                  <option value="PENDING">Pendentes</option>
+                  <option value="OVERDUE">Vencidas</option>
+                  <option value="PAID">Pagas</option>
+                </select>
+                <input type="month" id="bill-filter-month" onchange="loadBills()"
+                  style="padding:7px 10px;background:var(--surface2);border:1px solid var(--border2);border-radius:8px;font-family:var(--font);font-size:12px;color:var(--text);outline:none">
+              </div>
+            </div>
+            <div id="bills-list"></div>
+          </div>
+
+          <!-- FORMULÁRIO -->
+          <div class="card" style="align-self:start">
+            <div class="form-heading">
+              <h2 id="bill-form-title">Nova Conta</h2>
+              <p>Cadastre uma conta a pagar</p>
+            </div>
+            <div class="form-field" id="bf-name" style="margin-bottom:12px">
+              <label>Nome da Conta *</label>
+              <input type="text" id="bill-name" placeholder="Ex: Aluguel, Energia...">
+              <div class="form-error">Campo obrigatório.</div>
+            </div>
+            <div class="form-field" id="bf-valor" style="margin-bottom:12px">
+              <label>Valor (R$) *</label>
+              <input type="text" id="bill-valor" placeholder="0,00" inputmode="numeric" autocomplete="off">
+              <div class="form-error">Valor inválido.</div>
+            </div>
+            <div class="form-field" id="bf-due" style="margin-bottom:12px">
+              <label>Vencimento *</label>
+              <input type="date" id="bill-due">
+              <div class="form-error">Campo obrigatório.</div>
+            </div>
+            <div class="form-field" style="margin-bottom:12px">
+              <label>Categoria *</label>
+              <select id="bill-cat">
+                <option value="">Selecione...</option>
+                <option>Moradia</option>
+                <option>Energia</option>
+                <option>Água</option>
+                <option>Internet</option>
+                <option>Telefone</option>
+                <option>Fornecedores</option>
+                <option>Impostos</option>
+                <option>Pessoal</option>
+                <option>Assinaturas</option>
+                <option>Outros</option>
+              </select>
+            </div>
+            <div class="form-field" style="margin-bottom:12px">
+              <label>Observações</label>
+              <input type="text" id="bill-notes" placeholder="Opcional...">
+            </div>
+            <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text2);cursor:pointer;margin-bottom:18px;padding:10px;background:var(--surface2);border-radius:8px;border:1px solid var(--border)">
+              <input type="checkbox" id="bill-recurrent" style="accent-color:var(--blue);width:15px;height:15px">
+              <div>
+                <div style="font-weight:500;color:var(--text)">Conta recorrente</div>
+                <div style="font-size:11px;color:var(--text3)">Cria automaticamente para o próximo mês ao pagar</div>
+              </div>
+            </label>
+            <div style="display:flex;gap:8px">
+              <button class="btn btn-ghost" onclick="cancelBillEdit()" id="bill-cancel-btn" style="display:none">Cancelar</button>
+              <button class="btn btn-blue" onclick="submitBill()" style="flex:1" id="bill-submit-btn">Salvar Conta</button>
+            </div>
+          </div>
+
         </div>
       </div>
 
@@ -1083,7 +1196,7 @@ function initApp(data) {
   s('avatar-initials').textContent = data.user.name.slice(0,2).toUpperCase();
   s('sidebar-username').textContent = data.user.name;
   if (data.user.company) s('sidebar-company').textContent = data.user.company.name;
-  setDateDefault(); setMonthDefault(); setWeekDefault();
+  setDateDefault(); setMonthDefault(); setWeekDefault(); resetDashMes();
   populateCatSelect('inp-cat', currentType);
   goPage('dashboard');
 }
@@ -1091,6 +1204,7 @@ function initApp(data) {
 // ── NAV ──
 const PAGE_TITLES = {
   dashboard: ['Dashboard', ''],
+  contas:    ['Contas a Pagar', ''],
   nova:      ['Nova Movimentação', ''],
   historico: ['Histórico', ''],
   relatorio: ['Relatório Mensal', ''],
@@ -1105,8 +1219,10 @@ function goPage(id) {
   });
   const [title] = PAGE_TITLES[id];
   s('topbar-title').textContent = title;
+  if (s('dash-mes-wrap')) s('dash-mes-wrap').style.display = id === 'dashboard' ? 'flex' : 'none';
   if (id === 'dashboard') refreshDashboard();
   if (id === 'historico') loadHistorico(1);
+  if (id === 'contas') initBillsPage();
   if (id === 'nova')      { clearForm(); setDateDefault(); }
   if (id === 'relatorio') { setMonthDefault(); s('rel-content').innerHTML = ''; }
   if (id === 'semanal')   { setWeekDefault(); s('sem-content').innerHTML = ''; }
@@ -1150,22 +1266,74 @@ async function submitForm() {
 }
 
 // ── DASHBOARD ──
+function getDashMes() {
+  const val = s('dash-mes').value;
+  if (!val) return null;
+  const [y, m] = val.split('-');
+  return { year: parseInt(y), month: parseInt(m), label: new Date(y, m-1, 1).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' }) };
+}
+
+function resetDashMes() {
+  const now = new Date();
+  s('dash-mes').value = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`;
+  refreshDashboard();
+}
+
 async function refreshDashboard() {
+  const mes = getDashMes();
+  const params = mes ? `?year=${mes.year}&month=${mes.month}` : '';
+  const nomeMes = mes
+    ? mes.label.charAt(0).toUpperCase() + mes.label.slice(1)
+    : new Date().toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
+
+  // Atualiza labels dos KPIs com o mês selecionado
+  if (s('kpi-label-rec'))  s('kpi-label-rec').textContent  = 'Receitas — ' + nomeMes.split(' de ')[0];
+  if (s('kpi-label-desp')) s('kpi-label-desp').textContent = 'Despesas — ' + nomeMes.split(' de ')[0];
+
   try {
-    const d = await api('/reports/dashboard');
-    const saldo = d.balance;
+    // Busca dados do mês selecionado via relatório mensal
+    const [dash, tot] = await Promise.all([
+      api('/reports/dashboard'),
+      api('/transactions?limit=1')
+    ]);
+
+    const saldo = dash.balance;
     s('kpi-saldo').textContent = fmt(saldo);
     s('kpi-saldo').className = 'kpi-value ' + (saldo > 0 ? 'green' : saldo < 0 ? 'red' : 'blue');
-    s('kpi-receitas').textContent = fmt(d.month.income);
-    s('kpi-despesas').textContent = fmt(d.month.expense);
-    s('kpi-rec-count').textContent = d.month.count + ' lançamentos';
-    s('kpi-desp-count').textContent = d.month.count + ' lançamentos';
     s('kpi-saldo-trend').textContent = saldo >= 0 ? 'Saldo positivo' : 'Atenção: negativo';
-    const tot = await api('/transactions?limit=1');
     s('kpi-total').textContent = tot.meta.total;
-    s('kpi-total-trend').textContent = d.month.count + ' este mês';
-    renderChart(d.chart); renderCats(d.topCategories); renderRecent(d.recent);
+
+    if (mes) {
+      // Filtro por mês específico
+      const rel = await api(`/reports/monthly?year=${mes.year}&month=${mes.month}`);
+      const income  = rel.summary ? rel.summary.income  : 0;
+      const expense = rel.summary ? rel.summary.expense : 0;
+      const count   = rel.transactions ? rel.transactions.length : 0;
+      s('kpi-receitas').textContent = fmt(income);
+      s('kpi-despesas').textContent = fmt(expense);
+      s('kpi-rec-count').textContent  = count + ' lançamentos';
+      s('kpi-desp-count').textContent = count + ' lançamentos';
+      s('kpi-total-trend').textContent = count + ' neste período';
+      renderChart(dash.chart);
+      renderCats(rel.transactions ? buildCats(rel.transactions) : []);
+      renderRecent(rel.transactions ? rel.transactions.slice(0,5) : []);
+    } else {
+      s('kpi-receitas').textContent = fmt(dash.month.income);
+      s('kpi-despesas').textContent = fmt(dash.month.expense);
+      s('kpi-rec-count').textContent  = dash.month.count + ' lançamentos';
+      s('kpi-desp-count').textContent = dash.month.count + ' lançamentos';
+      s('kpi-total-trend').textContent = dash.month.count + ' este mês';
+      renderChart(dash.chart); renderCats(dash.topCategories); renderRecent(dash.recent);
+    }
   } catch(e) { toast('Erro ao carregar dashboard: ' + e.message, 'error'); }
+}
+
+function buildCats(transactions) {
+  const map = {};
+  transactions.filter(t => t.type === 'EXPENSE').forEach(t => {
+    map[t.category] = (map[t.category] || 0) + Number(t.amount);
+  });
+  return Object.entries(map).sort((a,b) => b[1]-a[1]).slice(0,5).map(([category, total]) => ({ category, total }));
 }
 
 function renderChart(chartData) {
@@ -1444,6 +1612,181 @@ function toast(msg, type = 'success') {
   const el = document.createElement('div'); el.className = `toast ${type}`;
   el.innerHTML = `<span class="t-icon ${type}">${type === 'success' ? '✓' : '!'}</span> ${msg}`;
   s('toast-container').appendChild(el); setTimeout(() => el.remove(), 3500);
+}
+
+
+// ══════════════════════════════════════════
+// CONTAS A PAGAR
+// ══════════════════════════════════════════
+let editingBillId = null
+
+function initBillsPage() {
+  const now = new Date()
+  s('bill-filter-month').value = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}`
+  s('bill-due').value = fmtDate(now)
+  s('bill-valor').addEventListener('input', () => applyMask(s('bill-valor')))
+  loadBills()
+}
+
+async function loadBills() {
+  const status = s('bill-filter-status').value
+  const month  = s('bill-filter-month').value
+  const params = new URLSearchParams()
+  if (status) params.set('status', status)
+  if (month)  params.set('month', month)
+
+  s('bills-list').innerHTML = '<div style="padding:2rem;text-align:center;color:var(--text3);font-size:13px">Carregando...</div>'
+
+  try {
+    const bills = await api(`/bills?${params}`)
+    renderBillsKpis(bills)
+    renderBillsList(bills)
+  } catch(e) {
+    s('bills-list').innerHTML = `<div class="empty-state"><strong>Erro</strong><p>${e.message}</p></div>`
+  }
+}
+
+function renderBillsKpis(bills) {
+  const overdue  = bills.filter(b => b.status === 'OVERDUE')
+  const pending  = bills.filter(b => b.status === 'PENDING')
+  const paid     = bills.filter(b => b.status === 'PAID')
+  const sumOf    = arr => arr.reduce((a, b) => a + Number(b.amount), 0)
+
+  s('bill-kpi-overdue').textContent       = fmt(sumOf(overdue))
+  s('bill-kpi-overdue-count').textContent = overdue.length + ' conta(s)'
+  s('bill-kpi-pending').textContent       = fmt(sumOf(pending))
+  s('bill-kpi-pending-count').textContent = pending.length + ' conta(s)'
+  s('bill-kpi-paid').textContent          = fmt(sumOf(paid))
+  s('bill-kpi-paid-count').textContent    = paid.length + ' conta(s)'
+}
+
+function renderBillsList(bills) {
+  if (!bills.length) {
+    s('bills-list').innerHTML = `<div class="empty-state"><div class="empty-icon">📋</div><strong>Nenhuma conta encontrada</strong><p>Cadastre uma conta usando o formulário ao lado.</p></div>`
+    return
+  }
+
+  const statusCfg = {
+    OVERDUE: { label: 'Vencida',  cls: 'badge-red',   icon: '🔴' },
+    PENDING: { label: 'Pendente', cls: 'badge-gray',  icon: '🟡' },
+    PAID:    { label: 'Paga',     cls: 'badge-green',  icon: '✅' },
+  }
+
+  s('bills-list').innerHTML = `
+    <table class="data-table">
+      <thead><tr><th>Conta</th><th>Categoria</th><th>Vencimento</th><th>Valor</th><th>Status</th><th>Ações</th></tr></thead>
+      <tbody>${bills.map(b => {
+        const cfg = statusCfg[b.status] || statusCfg.PENDING
+        const dueBR = fmtDateBR(b.dueDate)
+        return `<tr>
+          <td>
+            <div style="font-weight:500;color:var(--text)">${b.name}</div>
+            ${b.recurrent ? '<div style="font-size:10px;color:var(--blue);margin-top:2px">↺ Recorrente</div>' : ''}
+            ${b.notes ? `<div style="font-size:11px;color:var(--text3);margin-top:1px">${b.notes}</div>` : ''}
+          </td>
+          <td><span class="badge badge-gray">${b.category}</span></td>
+          <td style="font-family:var(--mono);font-size:12px;color:var(--text2)">${dueBR}</td>
+          <td style="font-family:var(--mono);font-weight:600;color:${b.status==='PAID'?'var(--green)':'var(--red)'}">${fmt(b.amount)}</td>
+          <td><span class="badge ${cfg.cls}">${cfg.icon} ${cfg.label}</span></td>
+          <td>
+            <div class="action-btns">
+              ${b.status !== 'PAID' ? `<button class="icon-btn" onclick="payBill('${b.id}')" title="Marcar como pago" style="color:var(--green)">✓</button>` : ''}
+              <button class="icon-btn" onclick="editBill('${b.id}')" title="Editar">✎</button>
+              <button class="icon-btn danger" onclick="deleteBill('${b.id}')" title="Excluir">✕</button>
+            </div>
+          </td>
+        </tr>`
+      }).join('')}</tbody>
+    </table>`
+}
+
+async function payBill(id) {
+  if (!confirm('Marcar esta conta como paga?')) return
+  try {
+    await api(`/bills/${id}/pay`, { method: 'PATCH', body: {} })
+    toast('Conta marcada como paga!', 'success')
+    loadBills()
+  } catch(e) { toast(e.message, 'error') }
+}
+
+async function submitBill() {
+  const name  = s('bill-name').value.trim()
+  const valor = readMasked(s('bill-valor'))
+  const due   = s('bill-due').value
+  const cat   = s('bill-cat').value
+
+  s('bf-name').classList.toggle('error', !name)
+  s('bf-valor').classList.toggle('error', !valor || valor <= 0 || isNaN(valor))
+  s('bf-due').classList.toggle('error', !due)
+  if (!name || !valor || valor <= 0 || isNaN(valor) || !due) {
+    toast('Preencha todos os campos obrigatórios.', 'error'); return
+  }
+
+  const body = {
+    name, amount: valor, dueDate: due, category: cat || 'Outros',
+    recurrent: s('bill-recurrent').checked,
+    notes: s('bill-notes').value.trim() || undefined,
+  }
+
+  try {
+    if (editingBillId) {
+      await api(`/bills/${editingBillId}`, { method: 'PATCH', body })
+      toast('Conta atualizada!', 'success')
+      cancelBillEdit()
+    } else {
+      await api('/bills', { method: 'POST', body })
+      toast('Conta cadastrada!', 'success')
+      clearBillForm()
+    }
+    loadBills()
+  } catch(e) { toast(e.message, 'error') }
+}
+
+async function editBill(id) {
+  try {
+    const bills = await api('/bills')
+    const b = bills.find(x => x.id === id)
+    if (!b) return
+
+    editingBillId = id
+    s('bill-form-title').textContent = 'Editar Conta'
+    s('bill-name').value      = b.name
+    setMasked(s('bill-valor'), b.amount)
+    s('bill-due').value       = b.dueDate.split('T')[0]
+    s('bill-cat').value       = b.category
+    s('bill-notes').value     = b.notes || ''
+    s('bill-recurrent').checked = b.recurrent
+    s('bill-submit-btn').textContent = 'Salvar Alterações'
+    s('bill-cancel-btn').style.display = 'block'
+    s('bill-cancel-btn').scrollIntoView({ behavior: 'smooth', block: 'center' })
+  } catch(e) { toast(e.message, 'error') }
+}
+
+function cancelBillEdit() {
+  editingBillId = null
+  s('bill-form-title').textContent = 'Nova Conta'
+  s('bill-submit-btn').textContent = 'Salvar Conta'
+  s('bill-cancel-btn').style.display = 'none'
+  clearBillForm()
+}
+
+function clearBillForm() {
+  s('bill-name').value = ''
+  s('bill-valor').value = ''
+  s('bill-notes').value = ''
+  s('bill-cat').value = ''
+  s('bill-recurrent').checked = false
+  s('bill-due').value = fmtDate(new Date())
+  ;['bf-name','bf-valor','bf-due'].forEach(id => s(id).classList.remove('error'))
+}
+
+async function deleteBill(id) {
+  if (!confirm('Excluir esta conta?')) return
+  try {
+    await fetch(API + `/bills/${id}`, { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } })
+    toast('Conta removida.', 'success')
+    loadBills()
+  } catch(e) { toast(e.message, 'error') }
 }
 
 // ── APLICAR MÁSCARA NOS CAMPOS DE VALOR ──

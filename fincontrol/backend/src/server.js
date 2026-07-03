@@ -10,12 +10,16 @@ import { authRoutes } from './routes/auth.js'
 import { transactionRoutes } from './routes/transactions.js'
 import { reportRoutes } from './routes/reports.js'
 import { companyRoutes } from './routes/companies.js'
+import { billRoutes } from './routes/bills.js'
 
 const app = Fastify({ logger: true })
 
 // ── Plugins ──────────────────────────────────────────────
+const allowedOrigin = process.env.FRONTEND_URL
+if (!allowedOrigin) throw new Error('FRONTEND_URL não definida nas variáveis de ambiente')
+
 await app.register(cors, {
-  origin: process.env.FRONTEND_URL || '*',
+  origin: allowedOrigin,
   credentials: true,
 })
 
@@ -38,6 +42,7 @@ await app.register(authRoutes, { prefix: '/api/auth' })
 await app.register(transactionRoutes, { prefix: '/api/transactions' })
 await app.register(reportRoutes, { prefix: '/api/reports' })
 await app.register(companyRoutes, { prefix: '/api/companies' })
+await app.register(billRoutes, { prefix: '/api/bills' })
 
 // Health check
 app.get('/health', () => ({ status: 'ok', timestamp: new Date().toISOString() }))

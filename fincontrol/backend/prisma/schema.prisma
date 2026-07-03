@@ -16,6 +16,7 @@ model Company {
 
   users        User[]
   transactions Transaction[]
+  bills        Bill[]
 }
 
 model User {
@@ -51,4 +52,27 @@ enum Role {
 enum TransactionType {
   INCOME
   EXPENSE
+}
+
+model Bill {
+  id        String     @id @default(cuid())
+  name      String
+  amount    Decimal    @db.Decimal(12, 2)
+  dueDate   DateTime   @db.Date
+  category  String
+  recurrent Boolean    @default(false)
+  status    BillStatus @default(PENDING)
+  paidAt    DateTime?
+  notes     String?
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  companyId String
+  company   Company @relation(fields: [companyId], references: [id])
+}
+
+enum BillStatus {
+  PENDING
+  PAID
+  OVERDUE
 }
