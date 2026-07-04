@@ -946,7 +946,7 @@ select option { background: var(--surface2); color: var(--text); }
       <div class="page" id="page-contas">
 
         <!-- KPIs -->
-        <div class="kpi-grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:20px">
+        <div class="kpi-grid" style="grid-template-columns:repeat(5,1fr);margin-bottom:20px">
           <div class="kpi-card red">
             <div class="kpi-label">Vencidas</div>
             <div class="kpi-value red" id="bill-kpi-overdue">—</div>
@@ -957,10 +957,20 @@ select option { background: var(--surface2); color: var(--text); }
             <div class="kpi-value amber" id="bill-kpi-pending">—</div>
             <div class="kpi-meta" id="bill-kpi-pending-count">0 contas</div>
           </div>
+          <div class="kpi-card red">
+            <div class="kpi-label">Total a Pagar</div>
+            <div class="kpi-value red" id="bill-kpi-total">—</div>
+            <div class="kpi-meta" id="bill-kpi-total-count">vencidas + pendentes</div>
+          </div>
+          <div class="kpi-card blue">
+            <div class="kpi-label">Saldo em Conta</div>
+            <div class="kpi-value blue" id="bill-kpi-saldo">—</div>
+            <div class="kpi-meta">saldo atual</div>
+          </div>
           <div class="kpi-card green">
-            <div class="kpi-label">Pagas este mês</div>
-            <div class="kpi-value green" id="bill-kpi-paid">—</div>
-            <div class="kpi-meta" id="bill-kpi-paid-count">0 contas</div>
+            <div class="kpi-label">Saldo após Pagar</div>
+            <div class="kpi-value green" id="bill-kpi-sobra">—</div>
+            <div class="kpi-meta" id="bill-kpi-sobra-meta">—</div>
           </div>
         </div>
 
@@ -1023,6 +1033,14 @@ select option { background: var(--surface2); color: var(--text); }
                 <option>Pessoal</option>
                 <option>Assinaturas</option>
                 <option>Outros</option>
+              </select>
+            </div>
+            <div class="form-field" style="margin-bottom:12px">
+              <label>Prioridade</label>
+              <select id="bill-priority">
+                <option value="MEDIA">🟡 Média</option>
+                <option value="ALTA">🔴 Alta</option>
+                <option value="BAIXA">🟢 Baixa</option>
               </select>
             </div>
             <div class="form-field" style="margin-bottom:12px">
@@ -1555,35 +1573,210 @@ function previewLogo(input) {
 function removeLogo() { logoBase64 = null; s('pdf-logo-input').value = ''; s('pdf-logo-preview').style.display = 'none'; s('pdf-logo-label').style.display = 'flex'; }
 
 async function gerarPDF() {
-  const empresa = s('pdf-empresa').value.trim(), responsavel = s('pdf-responsavel').value.trim();
-  const inicio = s('pdf-inicio').value, fim = s('pdf-fim').value, obs = s('pdf-obs').value.trim();
-  const errEl = s('pdf-modal-error'); errEl.style.display = 'none';
-  if (!empresa || !responsavel || !inicio || !fim) { errEl.textContent = 'Preencha empresa, responsável e período.'; errEl.style.display = 'block'; return; }
-  if (new Date(inicio) > new Date(fim)) { errEl.textContent = 'Data de início maior que a final.'; errEl.style.display = 'block'; return; }
-  const btn = s('btn-gerar-pdf'); btn.disabled = true; btn.textContent = 'Buscando dados...';
+  const empresa     = s('pdf-empresa').value.trim()
+  const responsavel = s('pdf-responsavel').value.trim()
+  const inicio      = s('pdf-inicio').value
+  const fim         = s('pdf-fim').value
+  const obs         = s('pdf-obs').value.trim()
+  const errEl       = s('pdf-modal-error')
+  errEl.style.display = 'none'
+
+  if (!empresa || !responsavel || !inicio || !fim) {
+    errEl.textContent = 'Preencha empresa, responsável e período.'
+    errEl.style.display = 'block'; return
+  }
+  if (new Date(inicio) > new Date(fim)) {
+    errEl.textContent = 'Data de início maior que a final.'
+    errEl.style.display = 'block'; return
+  }
+
+  const btn = s('btn-gerar-pdf')
+  btn.disabled = true; btn.textContent = 'Buscando dados...'
+
   try {
-    const params = new URLSearchParams({ startDate: inicio, endDate: fim, limit: 500 });
-    const d = await api(`/transactions?${params}`);
-    const txs = d.data || [];
-    const income  = txs.filter(t => t.type === 'INCOME').reduce((a,t) => a + Number(t.amount), 0);
-    const expense = txs.filter(t => t.type === 'EXPENSE').reduce((a,t) => a + Number(t.amount), 0);
-    const balance = income - expense;
+    const params = new URLSearchParams({ startDate: inicio, endDate: fim, limit: 500 })
+    const d      = await api(`/transactions?${params}`)
+    const txs    = d.data || []
+
+    const income  = txs.filter(t => t.type === 'INCOME').reduce((a, t) => a + Number(t.amount), 0)
+    const expense = txs.filter(t => t.type === 'EXPENSE').reduce((a, t) => a + Number(t.amount), 0)
+    const balance = income - expense
+
+    const geradoEm = new Date().toLocaleDateString('pt-BR', {
+      day: '2-digit', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit'
+    })
+
     const logoHtml = logoBase64
-      ? `<img src="${logoBase64}" style="max-height:60px;max-width:160px;object-fit:contain">`
-      : `<div style="width:40px;height:40px;background:#1e40af;border-radius:8px;display:flex;align-items:center;justify-content:center;color:white;font-size:18px;font-weight:700">FC</div>`;
-    const geradoEm = new Date().toLocaleDateString('pt-BR', { day:'2-digit', month:'long', year:'numeric', hour:'2-digit', minute:'2-digit' });
+      ? `<img src="${logoBase64}" style="max-height:56px;max-width:140px;object-fit:contain;display:block">`
+      : `<div style="width:38px;height:38px;background:#1e40af;border-radius:8px;display:flex;align-items:center;justify-content:center;color:white;font-size:16px;font-weight:800;flex-shrink:0">FC</div>`
+
     const rowsHtml = txs.length === 0
-      ? `<tr><td colspan="5" style="text-align:center;color:#64748b;padding:20px">Nenhuma movimentação no período</td></tr>`
-      : txs.map((t,i) => `<tr style="background:${i%2===0?'#fff':'#f8fafc'}"><td style="padding:8px 12px;font-size:13px;color:#1e293b">${fmtDateBR(t.date)}</td><td style="padding:8px 12px;font-size:13px">${t.description}</td><td style="padding:8px 12px;font-size:13px">${t.category}</td><td style="padding:8px 12px;text-align:center"><span style="padding:2px 8px;border-radius:20px;font-size:11px;font-weight:600;background:${t.type==='INCOME'?'#dcfce7':'#fee2e2'};color:${t.type==='INCOME'?'#166534':'#991b1b'}">${t.type==='INCOME'?'Receita':'Despesa'}</span></td><td style="padding:8px 12px;text-align:right;font-weight:600;font-family:monospace;color:${t.type==='INCOME'?'#166534':'#991b1b'}">${t.type==='INCOME'?'+':'-'}${fmt(t.amount)}</td></tr>`).join('');
-    const htmlPDF = `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="UTF-8"><title>Relatório — ${empresa}</title><style>*{box-sizing:border-box;margin:0;padding:0}body{font-family:'Segoe UI',Arial,sans-serif;color:#0f172a;background:#fff;font-size:13px}.page{padding:40px 48px;max-width:900px;margin:0 auto}.header{display:flex;justify-content:space-between;align-items:flex-start;padding-bottom:20px;border-bottom:2px solid #1e40af;margin-bottom:24px}.header-left{display:flex;align-items:center;gap:14px}.header-right{text-align:right;font-size:11px;color:#64748b}.empresa{font-size:19px;font-weight:700;color:#0f172a}.subtitulo{font-size:12px;color:#64748b;margin-top:2px}.periodo{font-size:12px;color:#1e40af;font-weight:600;margin-top:4px}.kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:24px}.kpi{background:#f8fafc;border-radius:10px;padding:16px 18px;border-left:3px solid #e2e8f0}.kpi.green{border-color:#22c55e}.kpi.red{border-color:#ef4444}.kpi.blue{border-color:#3b82f6}.kpi-label{font-size:10px;color:#94a3b8;text-transform:uppercase;letter-spacing:.5px;margin-bottom:6px}.kpi-val{font-size:20px;font-weight:700}.kpi.green .kpi-val{color:#166534}.kpi.red .kpi-val{color:#991b1b}.kpi.blue .kpi-val{color:#1e40af}table{width:100%;border-collapse:collapse;margin-bottom:24px}thead tr{background:#1e40af;color:white}thead th{padding:9px 12px;text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:.5px;font-weight:600}thead th:last-child{text-align:right}.footer{border-top:1px solid #e2e8f0;padding-top:14px;display:flex;justify-content:space-between;font-size:11px;color:#94a3b8}.obs-box{background:#fffbeb;border-left:3px solid #f59e0b;border-radius:6px;padding:12px 16px;margin-bottom:20px;font-size:12px;color:#78350f}.obs-label{font-weight:700;margin-bottom:3px;font-size:10px;text-transform:uppercase;color:#b45309}tr{page-break-inside:avoid;break-inside:avoid}thead{display:table-header-group}.kpis,.footer,.obs-box,.header{page-break-inside:avoid;break-inside:avoid}@media print{body{print-color-adjust:exact;-webkit-print-color-adjust:exact}.no-print{display:none}}</style></head><body><div class="page"><div class="header"><div class="header-left">${logoHtml}<div><div class="empresa">${empresa}</div><div class="subtitulo">Relatório de Prestação de Contas</div><div class="periodo">Período: ${fmtDateBR(inicio)} a ${fmtDateBR(fim)}</div></div></div><div class="header-right"><div>Responsável</div><strong style="color:#0f172a;font-size:13px">${responsavel}</strong><div style="margin-top:6px">Gerado em</div><div>${geradoEm}</div></div></div><div class="kpis"><div class="kpi green"><div class="kpi-label">Total Receitas</div><div class="kpi-val">${fmt(income)}</div></div><div class="kpi red"><div class="kpi-label">Total Despesas</div><div class="kpi-val">${fmt(expense)}</div></div><div class="kpi blue"><div class="kpi-label">Saldo do Período</div><div class="kpi-val" style="color:${balance>=0?'#166534':'#991b1b'}">${fmt(balance)}</div></div></div>${obs?`<div class="obs-box"><div class="obs-label">Observações</div>${obs}</div>`:''}<table><thead><tr><th>Data</th><th>Descrição</th><th>Categoria</th><th>Tipo</th><th style="text-align:right">Valor</th></tr></thead><tbody>${rowsHtml}</tbody></table><div class="footer"><span>FinControl — Sistema de Prestação de Contas</span><span>${txs.length} registro(s)</span></div><div class="no-print" style="margin-top:28px;text-align:center"><button id="btn-dl" onclick="downloadPDF()" style="padding:11px 28px;background:#1e40af;color:white;border:none;border-radius:8px;font-size:14px;cursor:pointer;font-weight:600">⬇ Baixar PDF</button></div><scr`+`ipt src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></scr`+`ipt><scr`+`ipt>function downloadPDF(){const w=document.querySelector('.no-print');w.style.display='none';html2pdf().set({margin:[10,10,10,10],filename:'relatorio-fincontrol.pdf',image:{type:'jpeg',quality:.98},html2canvas:{scale:2,useCORS:true},jsPDF:{unit:'mm',format:'a4',orientation:'portrait'},pagebreak:{mode:['css','avoid-all','legacy']}}).from(document.querySelector('.page')).save().then(()=>{w.style.display='block';});}</scr`+`ipt></div></body></html>`;
-    const win = window.open('', '_blank');
-    win.document.write(htmlPDF); win.document.close(); win.focus();
-    closePdfModal(); toast('Relatório gerado! Clique em "Baixar PDF" na nova aba.', 'success');
+      ? `<tr><td colspan="5" style="text-align:center;color:#64748b;padding:24px;font-size:13px">Nenhuma movimentação no período selecionado.</td></tr>`
+      : txs.map((t, i) => {
+          const isIncome = t.type === 'INCOME'
+          const bg = i % 2 === 0 ? '#ffffff' : '#f8fafc'
+          const badgeBg = isIncome ? '#dcfce7' : '#fee2e2'
+          const badgeColor = isIncome ? '#166534' : '#991b1b'
+          const valColor = isIncome ? '#166534' : '#991b1b'
+          return `<tr style="background:${bg};page-break-inside:avoid">
+            <td style="padding:9px 10px;font-size:12px;color:#475569;white-space:nowrap">${fmtDateBR(t.date)}</td>
+            <td style="padding:9px 10px;font-size:12px;color:#1e293b;max-width:200px">${t.description}</td>
+            <td style="padding:9px 10px;font-size:12px;color:#475569">${t.category}</td>
+            <td style="padding:9px 10px;text-align:center">
+              <span style="display:inline-block;padding:2px 10px;border-radius:20px;font-size:10px;font-weight:700;background:${badgeBg};color:${badgeColor}">${isIncome ? 'Receita' : 'Despesa'}</span>
+            </td>
+            <td style="padding:9px 10px;text-align:right;font-weight:700;font-family:'Courier New',monospace;font-size:12px;color:${valColor};white-space:nowrap">${isIncome ? '+' : '-'}${fmt(t.amount)}</td>
+          </tr>`
+        }).join('')
+
+    const obsHtml = obs
+      ? `<div style="background:#fffbeb;border-left:3px solid #f59e0b;border-radius:6px;padding:12px 16px;margin-bottom:20px">
+           <div style="font-size:10px;font-weight:700;color:#b45309;text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px">Observações</div>
+           <div style="font-size:12px;color:#78350f">${obs}</div>
+         </div>`
+      : ''
+
+    const html = `<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<title>Relatório — ${empresa}</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: Arial, Helvetica, sans-serif; color: #0f172a; background: #fff; font-size: 13px; }
+
+  .page { width: 210mm; min-height: 297mm; padding: 16mm 18mm; margin: 0 auto; }
+
+  /* HEADER */
+  .header { display: flex; justify-content: space-between; align-items: flex-start; padding-bottom: 16px; border-bottom: 2px solid #1e40af; margin-bottom: 20px; }
+  .header-left { display: flex; align-items: center; gap: 12px; }
+  .empresa { font-size: 18px; font-weight: 700; color: #0f172a; line-height: 1.2; }
+  .subtitulo { font-size: 11px; color: #64748b; margin-top: 2px; }
+  .periodo { font-size: 11px; color: #1e40af; font-weight: 600; margin-top: 3px; }
+  .header-right { text-align: right; font-size: 11px; color: #64748b; flex-shrink: 0; margin-left: 20px; }
+  .header-right strong { display: block; font-size: 13px; color: #0f172a; margin-top: 1px; }
+
+  /* KPIs */
+  .kpis { display: table; width: 100%; border-collapse: separate; border-spacing: 10px 0; margin: 0 -10px 20px; }
+  .kpi-wrap { display: table-cell; width: 33%; }
+  .kpi { background: #f8fafc; border-radius: 8px; padding: 12px 16px; border-left: 3px solid #e2e8f0; }
+  .kpi.green { border-color: #22c55e; }
+  .kpi.red   { border-color: #ef4444; }
+  .kpi.blue  { border-color: #3b82f6; }
+  .kpi-label { font-size: 10px; color: #94a3b8; text-transform: uppercase; letter-spacing: .5px; margin-bottom: 5px; }
+  .kpi-val   { font-size: 18px; font-weight: 700; }
+  .kpi.green .kpi-val { color: #166534; }
+  .kpi.red   .kpi-val { color: #991b1b; }
+  .kpi.blue  .kpi-val { color: #1e40af; }
+
+  /* TABLE */
+  table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+  thead tr { background: #1e40af; }
+  thead th { padding: 10px 10px; text-align: left; font-size: 10px; text-transform: uppercase; letter-spacing: .5px; font-weight: 700; color: #fff; }
+  thead th:last-child { text-align: right; }
+  tbody tr { page-break-inside: avoid; }
+  tbody td { border-bottom: 1px solid #f1f5f9; }
+
+  /* FOOTER */
+  .footer { border-top: 1px solid #e2e8f0; padding-top: 12px; display: flex; justify-content: space-between; font-size: 10px; color: #94a3b8; }
+
+  /* PRINT */
+  @media print {
+    body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .no-print { display: none !important; }
+    .page { padding: 12mm 14mm; }
+    thead { display: table-header-group; }
+    tbody tr { page-break-inside: avoid; }
+  }
+
+  /* SCREEN BUTTON */
+  .no-print { margin-top: 24px; text-align: center; padding-bottom: 24px; }
+  .no-print button {
+    padding: 12px 32px; background: #1e40af; color: white;
+    border: none; border-radius: 8px; font-size: 14px;
+    cursor: pointer; font-weight: 600; letter-spacing: .3px;
+  }
+  .no-print button:hover { background: #1d4ed8; }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="header">
+    <div class="header-left">
+      ${logoHtml}
+      <div>
+        <div class="empresa">${empresa}</div>
+        <div class="subtitulo">Relatório de Prestação de Contas</div>
+        <div class="periodo">Período: ${fmtDateBR(inicio)} a ${fmtDateBR(fim)}</div>
+      </div>
+    </div>
+    <div class="header-right">
+      <div>Responsável</div>
+      <strong>${responsavel}</strong>
+      <div style="margin-top:8px">Gerado em</div>
+      <div>${geradoEm}</div>
+    </div>
+  </div>
+
+  <div class="kpis">
+    <div class="kpi-wrap"><div class="kpi green">
+      <div class="kpi-label">Total Receitas</div>
+      <div class="kpi-val">${fmt(income)}</div>
+    </div></div>
+    <div class="kpi-wrap"><div class="kpi red">
+      <div class="kpi-label">Total Despesas</div>
+      <div class="kpi-val">${fmt(expense)}</div>
+    </div></div>
+    <div class="kpi-wrap"><div class="kpi blue">
+      <div class="kpi-label">Saldo do Período</div>
+      <div class="kpi-val" style="color:${balance >= 0 ? '#166534' : '#991b1b'}">${fmt(balance)}</div>
+    </div></div>
+  </div>
+
+  ${obsHtml}
+
+  <table>
+    <thead>
+      <tr>
+        <th style="width:90px">Data</th>
+        <th>Descrição</th>
+        <th style="width:110px">Categoria</th>
+        <th style="width:80px;text-align:center">Tipo</th>
+        <th style="width:110px;text-align:right">Valor</th>
+      </tr>
+    </thead>
+    <tbody>${rowsHtml}</tbody>
+  </table>
+
+  <div class="footer">
+    <span>FinControl — Sistema de Gestão Financeira</span>
+    <span>${txs.length} registro(s) no período</span>
+  </div>
+
+  <div class="no-print">
+    <button onclick="window.print()">🖨️ Imprimir / Salvar como PDF</button>
+  </div>
+
+</div>
+</body>
+</html>`
+
+    const win = window.open('', '_blank')
+    if (!win) { toast('Permita popups para gerar o PDF.', 'error'); return }
+    win.document.open()
+    win.document.write(html)
+    win.document.close()
+    win.focus()
+    setTimeout(() => win.print(), 600)
+    closePdfModal()
+    toast('PDF gerado com sucesso!', 'success')
+
   } catch(e) {
-    s('pdf-modal-error').textContent = 'Erro ao buscar dados: ' + e.message;
-    s('pdf-modal-error').style.display = 'block';
+    s('pdf-modal-error').textContent = 'Erro ao buscar dados: ' + e.message
+    s('pdf-modal-error').style.display = 'block'
   } finally {
-    btn.disabled = false; btn.textContent = '⬇ Gerar PDF';
+    btn.disabled = false; btn.textContent = '⬇ Gerar PDF'
   }
 }
 
@@ -1638,25 +1831,40 @@ async function loadBills() {
 
   try {
     const bills = await api(`/bills?${params}`)
-    renderBillsKpis(bills)
+    await renderBillsKpis(bills)
     renderBillsList(bills)
   } catch(e) {
     s('bills-list').innerHTML = `<div class="empty-state"><strong>Erro</strong><p>${e.message}</p></div>`
   }
 }
 
-function renderBillsKpis(bills) {
+async function renderBillsKpis(bills) {
   const overdue  = bills.filter(b => b.status === 'OVERDUE')
   const pending  = bills.filter(b => b.status === 'PENDING')
-  const paid     = bills.filter(b => b.status === 'PAID')
   const sumOf    = arr => arr.reduce((a, b) => a + Number(b.amount), 0)
+  const totalAPagar = sumOf(overdue) + sumOf(pending)
 
   s('bill-kpi-overdue').textContent       = fmt(sumOf(overdue))
   s('bill-kpi-overdue-count').textContent = overdue.length + ' conta(s)'
   s('bill-kpi-pending').textContent       = fmt(sumOf(pending))
   s('bill-kpi-pending-count').textContent = pending.length + ' conta(s)'
-  s('bill-kpi-paid').textContent          = fmt(sumOf(paid))
-  s('bill-kpi-paid-count').textContent    = paid.length + ' conta(s)'
+  s('bill-kpi-total').textContent         = fmt(totalAPagar)
+  s('bill-kpi-total-count').textContent   = (overdue.length + pending.length) + ' conta(s)'
+
+  // Busca saldo atual do dashboard
+  try {
+    const dash = await api('/reports/dashboard')
+    const saldo = dash.balance
+    const sobra = saldo - totalAPagar
+    s('bill-kpi-saldo').textContent    = fmt(saldo)
+    s('bill-kpi-saldo').className      = 'kpi-value ' + (saldo >= 0 ? 'blue' : 'red')
+    s('bill-kpi-sobra').textContent    = fmt(sobra)
+    s('bill-kpi-sobra').className      = 'kpi-value ' + (sobra >= 0 ? 'green' : 'red')
+    s('bill-kpi-sobra-meta').textContent = sobra >= 0 ? 'vai sobrar ✓' : 'atenção: vai faltar !'
+  } catch(e) {
+    s('bill-kpi-saldo').textContent = '—'
+    s('bill-kpi-sobra').textContent = '—'
+  }
 }
 
 function renderBillsList(bills) {
@@ -1670,10 +1878,24 @@ function renderBillsList(bills) {
     PENDING: { label: 'Pendente', cls: 'badge-gray',  icon: '🟡' },
     PAID:    { label: 'Paga',     cls: 'badge-green',  icon: '✅' },
   }
+  const priCfg = {
+    ALTA:  { label: 'Alta',  color: 'var(--red)',   icon: '🔴' },
+    MEDIA: { label: 'Média', color: 'var(--amber)', icon: '🟡' },
+    BAIXA: { label: 'Baixa', color: 'var(--green)', icon: '🟢' },
+  }
+  // Ordena: vencidas primeiro, depois por prioridade, depois por data
+  const priOrder = { ALTA: 0, MEDIA: 1, BAIXA: 2 }
+  const stOrder  = { OVERDUE: 0, PENDING: 1, PAID: 2 }
+  bills = [...bills].sort((a, b) => {
+    if (stOrder[a.status] !== stOrder[b.status]) return stOrder[a.status] - stOrder[b.status]
+    const pa = priOrder[a.priority || 'MEDIA'] ?? 1
+    const pb = priOrder[b.priority || 'MEDIA'] ?? 1
+    return pa - pb
+  })
 
   s('bills-list').innerHTML = `
     <table class="data-table">
-      <thead><tr><th>Conta</th><th>Categoria</th><th>Vencimento</th><th>Valor</th><th>Status</th><th>Ações</th></tr></thead>
+      <thead><tr><th>Conta</th><th>Prioridade</th><th>Categoria</th><th>Vencimento</th><th>Valor</th><th>Status</th><th>Ações</th></tr></thead>
       <tbody>${bills.map(b => {
         const cfg = statusCfg[b.status] || statusCfg.PENDING
         const dueBR = fmtDateBR(b.dueDate)
@@ -1683,6 +1905,7 @@ function renderBillsList(bills) {
             ${b.recurrent ? '<div style="font-size:10px;color:var(--blue);margin-top:2px">↺ Recorrente</div>' : ''}
             ${b.notes ? `<div style="font-size:11px;color:var(--text3);margin-top:1px">${b.notes}</div>` : ''}
           </td>
+          <td><span style="font-size:12px;color:${(priCfg[b.priority||'MEDIA']||priCfg.MEDIA).color};font-weight:600">${(priCfg[b.priority||'MEDIA']||priCfg.MEDIA).icon} ${(priCfg[b.priority||'MEDIA']||priCfg.MEDIA).label}</span></td>
           <td><span class="badge badge-gray">${b.category}</span></td>
           <td style="font-family:var(--mono);font-size:12px;color:var(--text2)">${dueBR}</td>
           <td style="font-family:var(--mono);font-weight:600;color:${b.status==='PAID'?'var(--green)':'var(--red)'}">${fmt(b.amount)}</td>
@@ -1724,6 +1947,7 @@ async function submitBill() {
   const body = {
     name, amount: valor, dueDate: due, category: cat || 'Outros',
     recurrent: s('bill-recurrent').checked,
+    priority: s('bill-priority').value || 'MEDIA',
     notes: s('bill-notes').value.trim() || undefined,
   }
 
@@ -1755,6 +1979,7 @@ async function editBill(id) {
     s('bill-cat').value       = b.category
     s('bill-notes').value     = b.notes || ''
     s('bill-recurrent').checked = b.recurrent
+    s('bill-priority').value = b.priority || 'MEDIA'
     s('bill-submit-btn').textContent = 'Salvar Alterações'
     s('bill-cancel-btn').style.display = 'block'
     s('bill-cancel-btn').scrollIntoView({ behavior: 'smooth', block: 'center' })
@@ -1775,6 +2000,7 @@ function clearBillForm() {
   s('bill-notes').value = ''
   s('bill-cat').value = ''
   s('bill-recurrent').checked = false
+  s('bill-priority').value = 'MEDIA'
   s('bill-due').value = fmtDate(new Date())
   ;['bf-name','bf-valor','bf-due'].forEach(id => s(id).classList.remove('error'))
 }
