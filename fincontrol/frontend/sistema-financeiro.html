@@ -1645,7 +1645,7 @@ async function gerarPDF() {
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body { font-family: Arial, Helvetica, sans-serif; color: #0f172a; background: #fff; font-size: 13px; }
 
-  .page { width: 210mm; min-height: 297mm; padding: 16mm 18mm; margin: 0 auto; }
+  .page { width: 100%; padding: 16mm 18mm; margin: 0 auto; }
 
   /* HEADER */
   .header { display: flex; justify-content: space-between; align-items: flex-start; padding-bottom: 16px; border-bottom: 2px solid #1e40af; margin-bottom: 20px; }
@@ -1754,11 +1754,16 @@ async function gerarPDF() {
     <span>${txs.length} registro(s) no período</span>
   </div>
 
-  <div class="no-print">
+  <div class="no-print" id="print-btn-wrap" style="display:none">
     <button onclick="window.print()">🖨️ Imprimir / Salvar como PDF</button>
   </div>
 
 </div>
+<script>
+  window.onload = function() {
+    document.getElementById('print-btn-wrap').style.display = 'block';
+  }
+</script>
 </body>
 </html>`
 
@@ -1768,7 +1773,6 @@ async function gerarPDF() {
     win.document.write(html)
     win.document.close()
     win.focus()
-    setTimeout(() => win.print(), 600)
     closePdfModal()
     toast('PDF gerado com sucesso!', 'success')
 
