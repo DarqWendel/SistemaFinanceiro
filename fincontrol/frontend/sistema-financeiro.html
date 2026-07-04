@@ -1755,30 +1755,22 @@ async function gerarPDF() {
   </div>
 
 </div>
-<scr` + `ipt>
-  window.onload = function() {
-    setTimeout(function() { window.print(); }, 500);
-  }
-  window.onafterprint = function() {
-    document.getElementById('dl-btn-wrap').style.display = 'block';
-  }
-</scr` + `ipt>
-<div id="dl-btn-wrap" style="display:none;position:fixed;bottom:24px;right:24px;z-index:999">
-  <button onclick="window.print()" style="padding:12px 28px;background:#1e40af;color:white;border:none;border-radius:8px;font-size:14px;cursor:pointer;font-weight:600;box-shadow:0 4px 20px rgba(0,0,0,0.3)">
-    🖨️ Salvar como PDF
-  </button>
-</div>
 </body>
 </html>`
 
-    const win = window.open('', '_blank')
-    if (!win) { toast('Permita popups para gerar o PDF.', 'error'); return }
-    win.document.open()
-    win.document.write(html)
-    win.document.close()
-    win.focus()
+    // Download direto via Blob
+    const blob = new Blob([html], { type: 'text/html;charset=utf-8' })
+    const url  = URL.createObjectURL(blob)
+    const a    = document.createElement('a')
+    const nomeArquivo = `relatorio-${empresa.toLowerCase().replace(/\s+/g,'-')}-${inicio}-${fim}.html`
+    a.href     = url
+    a.download = nomeArquivo
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+    setTimeout(() => URL.revokeObjectURL(url), 2000)
     closePdfModal()
-    toast('PDF gerado com sucesso!', 'success')
+    toast('Relatório baixado! Abra o arquivo e use Ctrl+P → Salvar como PDF.', 'success')
 
   } catch(e) {
     s('pdf-modal-error').textContent = 'Erro ao buscar dados: ' + e.message
