@@ -7,6 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -1758,19 +1759,155 @@ async function gerarPDF() {
 </body>
 </html>`
 
-    // Download direto via Blob
-    const blob = new Blob([html], { type: 'text/html;charset=utf-8' })
-    const url  = URL.createObjectURL(blob)
-    const a    = document.createElement('a')
-    const nomeArquivo = `relatorio-${empresa.toLowerCase().replace(/\s+/g,'-')}-${inicio}-${fim}.html`
-    a.href     = url
-    a.download = nomeArquivo
-    document.body.appendChild(a)
-    a.click()
-    document.body.removeChild(a)
-    setTimeout(() => URL.revokeObjectURL(url), 2000)
+    // Gera PDF direto via jsPDF
+    const { jsPDF } = window.jspdf
+    const doc = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' })
+    const pageW = doc.internal.pageSize.getWidth()
+    const pageH = doc.internal.pageSize.getHeight()
+    const margin = 14
+    const col = pageW - margin * 2
+    let y = margin
+
+    // Header azul
+    doc.setFillColor(30, 64, 175)
+    doc.rect(margin, y, col, 0.5, 'F')
+
+    // Logo FC
+    doc.setFillColor(30, 64, 175)
+    doc.roundedRect(margin, y + 2, 10, 10, 2, 2, 'F')
+    doc.setFontSize(8); doc.setTextColor(255,255,255); doc.setFont('helvetica','bold')
+    doc.text('FC', margin + 3.2, y + 8.5)
+
+    // Empresa
+    doc.setFontSize(14); doc.setTextColor(15,23,42); doc.setFont('helvetica','bold')
+    doc.text(empresa, margin + 13, y + 6)
+    doc.setFontSize(8); doc.setTextColor(100,116,139); doc.setFont('helvetica','normal')
+    doc.text('Relatório de Prestação de Contas', margin + 13, y + 10)
+    doc.setFontSize(8); doc.setTextColor(30,64,175); doc.setFont('helvetica','bold')
+    doc.text('Período: ' + fmtDateBR(inicio) + ' a ' + fmtDateBR(fim), margin + 13, y + 14)
+
+    // Responsável (direita)
+    doc.setFontSize(7); doc.setTextColor(100,116,139); doc.setFont('helvetica','normal')
+    doc.text('Responsável', pageW - margin, y + 6, { align: 'right' })
+    doc.setFontSize(9); doc.setTextColor(15,23,42); doc.setFont('helvetica','bold')
+    doc.text(responsavel, pageW - margin, y + 10, { align: 'right' })
+    doc.setFontSize(7); doc.setTextColor(100,116,139); doc.setFont('helvetica','normal')
+    doc.text(geradoEm, pageW - margin, y + 14, { align: 'right' })
+
+    y += 20
+    doc.setDrawColor(30,64,175); doc.setLineWidth(0.4)
+    doc.line(margin, y, pageW - margin, y)
+    y += 6
+
+    // KPIs
+    const kpiW = (col - 6) / 3
+    const kpis = [
+      { label: 'TOTAL RECEITAS', val: fmt(income), color: [22,101,52] },
+      { label: 'TOTAL DESPESAS', val: fmt(expense), color: [153,27,27] },
+      { label: 'SALDO DO PERÍODO', val: fmt(balance), color: balance >= 0 ? [22,101,52] : [153,27,27] },
+    ]
+    kpis.forEach((k, i) => {
+      const x = margin + i * (kpiW + 3)
+      doc.setFillColor(248,250,252); doc.roundedRect(x, y, kpiW, 16, 2, 2, 'F')
+      doc.setDrawColor(...k.color); doc.setLineWidth(0.8)
+      doc.line(x, y + 1, x, y + 15)
+      doc.setFontSize(7); doc.setTextColor(148,163,184); doc.setFont('helvetica','normal')
+      doc.text(k.label, x + 3, y + 6)
+      doc.setFontSize(11); doc.setTextColor(...k.color); doc.setFont('helvetica','bold')
+      doc.text(k.val, x + 3, y + 13)
+    })
+    y += 22
+
+    // Observações
+    if (obs) {
+      doc.setFillColor(255,251,235)
+      doc.roundedRect(margin, y, col, 10, 2, 2, 'F')
+      doc.setDrawColor(245,158,11); doc.setLineWidth(0.8)
+      doc.line(margin, y + 1, margin, y + 9)
+      doc.setFontSize(7); doc.setTextColor(180,83,9); doc.setFont('helvetica','bold')
+      doc.text('OBSERVAÇÕES', margin + 3, y + 5)
+      doc.setFont('helvetica','normal'); doc.setTextColor(120,53,15)
+      doc.text(obs, margin + 3, y + 9)
+      y += 14
+    }
+
+    // Tabela
+    const cols = ['Data','Descrição','Categoria','Tipo','Valor']
+    const colWs = [22, 70, 30, 20, 30]
+    // Cabeçalho
+    doc.setFillColor(30,64,175)
+    doc.rect(margin, y, col, 8, 'F')
+    doc.setFontSize(7); doc.setTextColor(255,255,255); doc.setFont('helvetica','bold')
+    let cx = margin + 2
+    cols.forEach((h, i) => {
+      const align = i === 4 ? 'right' : 'left'
+      const tx = i === 4 ? cx + colWs[i] - 2 : cx
+      doc.text(h.toUpperCase(), tx, y + 5.5, { align })
+      cx += colWs[i]
+    })
+    y += 8
+
+    txs.forEach((t, idx) => {
+      if (y > pageH - 20) { doc.addPage(); y = margin }
+      const bg = idx % 2 === 0 ? [255,255,255] : [248,250,252]
+      doc.setFillColor(...bg)
+      doc.rect(margin, y, col, 7, 'F')
+      doc.setDrawColor(241,245,249); doc.setLineWidth(0.2)
+      doc.line(margin, y + 7, margin + col, y + 7)
+
+      const isInc = t.type === 'INCOME'
+      const rowCols = [
+        fmtDateBR(t.date),
+        t.description.length > 35 ? t.description.slice(0,35)+'…' : t.description,
+        t.category,
+        isInc ? 'Receita' : 'Despesa',
+        (isInc ? '+' : '-') + fmt(t.amount)
+      ]
+      cx = margin + 2
+      rowCols.forEach((val, i) => {
+        doc.setFontSize(8); doc.setFont('helvetica','normal')
+        if (i === 3) {
+          // Badge tipo
+          const bw = 18, bh = 4.5
+          const bx = cx
+          doc.setFillColor(...(isInc ? [220,252,231] : [254,226,226]))
+          doc.roundedRect(bx, y + 1.2, bw, bh, 1, 1, 'F')
+          doc.setTextColor(...(isInc ? [22,101,52] : [153,27,27]))
+          doc.setFontSize(6.5); doc.setFont('helvetica','bold')
+          doc.text(val, bx + bw/2, y + 4.5, { align: 'center' })
+        } else if (i === 4) {
+          doc.setTextColor(...(isInc ? [22,101,52] : [153,27,27]))
+          doc.setFont('helvetica','bold')
+          doc.text(val, cx + colWs[i] - 2, y + 5, { align: 'right' })
+        } else {
+          doc.setTextColor(71,85,105)
+          doc.text(val, cx, y + 5)
+        }
+        cx += colWs[i]
+      })
+      y += 7
+    })
+
+    // Footer
+    y += 4
+    doc.setDrawColor(226,232,240); doc.setLineWidth(0.3)
+    doc.line(margin, y, pageW - margin, y)
+    y += 4
+    doc.setFontSize(7); doc.setTextColor(148,163,184); doc.setFont('helvetica','normal')
+    doc.text('FinControl — Sistema de Gestão Financeira', margin, y)
+    doc.text(txs.length + ' registro(s)', pageW - margin, y, { align: 'right' })
+
+    // Page numbers
+    const pages = doc.internal.getNumberOfPages()
+    for (let i = 1; i <= pages; i++) {
+      doc.setPage(i)
+      doc.setFontSize(7); doc.setTextColor(148,163,184)
+      doc.text('Página ' + i + ' de ' + pages, pageW - margin, pageH - 6, { align: 'right' })
+    }
+
+    doc.save('relatorio-fincontrol-' + inicio + '-' + fim + '.pdf')
     closePdfModal()
-    toast('Relatório baixado! Abra o arquivo e use Ctrl+P → Salvar como PDF.', 'success')
+    toast('PDF baixado com sucesso!', 'success')
 
   } catch(e) {
     s('pdf-modal-error').textContent = 'Erro ao buscar dados: ' + e.message
